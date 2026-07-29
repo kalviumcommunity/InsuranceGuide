@@ -1,0 +1,12 @@
+# Python virtual environments
+.venv/
+.venv_backup/
+
+# Environment variables and secrets
+.env
+
+# Local document data
+data/
+
+# Node dependencies (future use)
+node_modules/
