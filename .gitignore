@@ -10,3 +10,5 @@ data/
 
 # Node dependencies (future use)
 node_modules/
+
+logs/
