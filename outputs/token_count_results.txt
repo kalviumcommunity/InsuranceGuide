@@ -1,0 +1,56 @@
+TOKEN COUNT REPORT
+============================================================
+------------------------------------------------------------
+Short Question
+
+Characters      : 54
+Words           : 6
+Tokens          : 7
+
+Estimated Input Cost  : $0.00000105
+Estimated Output Cost : $0.00000420
+
+------------------------------------------------------------
+Paragraph
+
+Characters      : 242
+Words           : 28
+Tokens          : 39
+
+Estimated Input Cost  : $0.00000585
+Estimated Output Cost : $0.00002340
+
+------------------------------------------------------------
+Full Document
+
+Characters      : 3250
+Words           : 420
+Tokens          : 561
+
+Estimated Input Cost  : $0.00008415
+Estimated Output Cost : $0.00033660
+
+
+============================================================
+Character vs Token Relationship
+============================================================
+
+Characters and token counts generally increase together.
+
+However, they are NOT exactly proportional.
+
+Reasons:
+
+1. Long words may be split into multiple tokens.
+
+2. Numbers and punctuation create different token patterns.
+
+3. URLs are usually broken into many tokens.
+
+4. Programming code often generates more tokens than plain English.
+
+5. Different languages (Hindi, Chinese, Japanese, etc.)
+   have different tokenization behaviour.
+
+This is why measuring token usage is important before
+building a production RAG application.
