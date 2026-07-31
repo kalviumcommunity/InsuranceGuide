@@ -1,0 +1,76 @@
+======================================================================
+CHAT HISTORY DEMO
+======================================================================
+
+--------------------------------------------
+User      : What is health insurance?
+Assistant : Health insurance helps pay for medical expenses.
+Current Tokens : 25
+
+--------------------------------------------
+User      : Does it cover surgeries?
+Assistant : Most policies cover surgeries based on policy conditions.
+Current Tokens : 39
+
+--------------------------------------------
+User      : What is a waiting period?
+Assistant : A waiting period is the time before certain benefits become active.
+Current Tokens : 57
+
+--------------------------------------------
+User      : Can I insure my parents?
+Assistant : Yes. Many insurers offer family floater and senior citizen plans.
+Current Tokens : 76
+
+--------------------------------------------
+User      : What is cashless treatment?
+Assistant : Cashless treatment allows hospitals to settle bills directly with insurers.
+Current Tokens : 94
+
+--------------------------------------------
+User      : What documents are needed for claims?
+Assistant : Identity proof, hospital bills, discharge summary and policy details.
+Current Tokens : 113
+
+--------------------------------------------
+User      : Does insurance cover dental treatment?
+Assistant : Usually only if specifically included in the policy.
+Current Tokens : 128
+
+--------------------------------------------
+User      : Can pre-existing diseases be covered?
+Assistant : Yes, after the applicable waiting period.
+Current Tokens : 143
+
+--------------------------------------------
+User      : What is a deductible?
+Assistant : A deductible is the amount you pay before insurance starts paying.
+Current Tokens : 160
+
+--------------------------------------------
+User      : Can I renew my policy every year?
+Assistant : Yes, most health insurance policies are renewable annually.
+Current Tokens : 178
+
+--------------------------------------------
+User      : What is a network hospital?
+Assistant : A hospital partnered with the insurance company.
+Current Tokens : 192
+
+--------------------------------------------
+User      : Can I buy insurance online?
+Assistant : Yes. Most insurers provide online purchase and renewal facilities.
+Current Tokens : 209
+
+--------------------------------------------
+User      : What is claim settlement ratio?
+Assistant : It represents the percentage of claims settled by an insurer.
+Current Tokens : 226
+
+--------------------------------------------
+User      : How do I compare insurance plans?
+Assistant : Compare premiums, coverage, exclusions, waiting periods and settlement ratio.
+Current Tokens : 246
+
+Conversation completed successfully.
+Final Token Count : 246
