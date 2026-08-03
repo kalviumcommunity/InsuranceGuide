@@ -1,0 +1,26 @@
+======================================================================    
+EXPERIMENT 1 - LOW TEMPERATURE (0.2)
+======================================================================    
+Retrieval-Augmented Generation (RAG) enhances Large Language Models (LLMs) by providing them with external, up-to-date information. When a user asks a question, RAG first retrieves relevant documents or data snippets from a designated knowledge base, often a vector database. This retrieved context is then appended to the original query and fed into the LLM. The LLM uses this augmented input to generate a more accurate, factual, and grounded response, significantly reducing the likelihood of hallucinations and ensuring the output is based on verifiable sources rather than just its pre-trained knowledge.
+
+
+======================================================================    
+EXPERIMENT 2 - HIGH TEMPERATURE (1.0)
+======================================================================    
+Retrieval-Augmented Generation (RAG) enhances Large Language Models (LLMs) by providing them with external, relevant information before generating a response. Instead of relying solely on their pre-trained knowledge, RAG first retrieves pertinent data from an external knowledge base (like documents or databases) based on a user's query.
+
+This retrieved information then "augments" the original prompt, acting as a dynamic context. The LLM then generates its answer using this enriched input. This process significantly reduces hallucinations, ensures responses are grounded in current facts, and improves accuracy and reliability, allowing LLMs to answer questions beyond their training data.
+
+
+======================================================================    
+EXPERIMENT 3 - MAX OUTPUT TOKENS = 40
+======================================================================    
+Retrieval-
+
+
+======================================================================    
+EXPERIMENT 4 - TOP_P = 0.3
+======================================================================    
+Retrieval-Augmented Generation (RAG) enhances large language models (LLMs) by providing them with external, up-to-date information, overcoming their limitations like hallucinations or outdated knowledge.
+
+When a user asks a question, RAG first *retrieves* relevant documents or data snippets from a specified knowledge base (often a vector database). These retrieved pieces of information are then supplied as *context* to the LLM alongside the original query. The LLM then *generates* its response, grounding it in the provided, factual context. This process ensures more accurate, reliable, and attributable answers, making LLMs more practical for enterprise and domain-specific applications.
