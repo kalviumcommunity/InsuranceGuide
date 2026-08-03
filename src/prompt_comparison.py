@@ -3,6 +3,8 @@ import os
 from dotenv import load_dotenv
 from google import genai
 
+from prompts.answer import render_prompt
+
 load_dotenv()
 
 api_key = os.getenv("GEMINI_API_KEY")
@@ -18,44 +20,36 @@ user_question = (
     "and third-party car insurance?"
 )
 
-# -----------------------------
-# Prompt 1 - Vague
-# -----------------------------
-vague_system_prompt = """
-You are a helpful AI assistant.
+# Context used by the reusable template
+context = """
+Comprehensive car insurance covers damage to your own vehicle as well as
+third-party liabilities. Third-party insurance only covers damages caused
+to another person's vehicle, property, or injuries.
 """
 
 # -----------------------------
-# Prompt 2 - Clear and Constrained
+# Prompt 1 - Using Reusable Template
 # -----------------------------
-clear_system_prompt = """
-You are an internal insurance support assistant.
+vague_system_prompt = render_prompt(
+    context=context,
+    question=user_question,
+)
 
-Role:
-- Help employees understand insurance policies.
-
-Scope:
-- Answer only insurance-related questions.
-- Do not invent information.
-
-Constraints:
-- Keep the answer under 120 words.
-- Use bullet points.
-- Use a professional and friendly tone.
-- If unsure, say:
-"I don't have enough information to answer that. Please consult the official insurance documentation."
-"""
+# -----------------------------
+# Prompt 2 - Reusing the Same Template
+# -----------------------------
+clear_system_prompt = render_prompt(
+    context=context,
+    question=user_question,
+)
 
 print("=" * 60)
-print("PROMPT 1 - VAGUE")
+print("PROMPT 1 - TEMPLATE")
 print("=" * 60)
 
 response1 = client.models.generate_content(
     model=model_name,
-    contents=[
-        vague_system_prompt,
-        user_question,
-    ],
+    contents=vague_system_prompt,
 )
 
 print(response1.text)
@@ -63,15 +57,12 @@ print(response1.text)
 print("\n")
 
 print("=" * 60)
-print("PROMPT 2 - CLEAR")
+print("PROMPT 2 - TEMPLATE REUSED")
 print("=" * 60)
 
 response2 = client.models.generate_content(
     model=model_name,
-    contents=[
-        clear_system_prompt,
-        user_question,
-    ],
+    contents=clear_system_prompt,
 )
 
 print(response2.text)

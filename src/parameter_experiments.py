@@ -1,7 +1,10 @@
 import os
+
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+
+from prompts.answer import render_prompt
 
 load_dotenv()
 
@@ -13,9 +16,14 @@ if not api_key:
 
 client = genai.Client(api_key=api_key)
 
-prompt = """
-Explain Retrieval-Augmented Generation (RAG) in about 100 words.
+context = """
+Retrieval-Augmented Generation (RAG) retrieves relevant documents before generating an answer.
 """
+
+prompt = render_prompt(
+    context=context,
+    question="Explain Retrieval-Augmented Generation (RAG) in about 100 words."
+)
 
 print("=" * 70)
 print("EXPERIMENT 1 - LOW TEMPERATURE (0.2)")
@@ -50,7 +58,7 @@ print(response.text)
 print("\n")
 
 print("=" * 70)
-print("EXPERIMENT 3 - MAX OUTPUT TOKENS = 40")
+print("EXPERIMENT 3 - MAX OUTPUT TOKENS")
 print("=" * 70)
 
 response = client.models.generate_content(
@@ -67,7 +75,7 @@ print(response.text)
 print("\n")
 
 print("=" * 70)
-print("EXPERIMENT 4 - TOP_P = 0.3")
+print("EXPERIMENT 4 - TOP_P")
 print("=" * 70)
 
 response = client.models.generate_content(
