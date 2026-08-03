@@ -3,7 +3,6 @@ import os
 from dotenv import load_dotenv
 from google import genai
 
-# Load environment variables
 load_dotenv()
 
 api_key = os.getenv("GEMINI_API_KEY")
@@ -14,44 +13,65 @@ if not api_key:
 
 client = genai.Client(api_key=api_key)
 
-# ----------------------------
-# System Prompt (Task 2)
-# ----------------------------
+user_question = (
+    "What is the difference between comprehensive car insurance "
+    "and third-party car insurance?"
+)
 
-system_prompt = """
+# -----------------------------
+# Prompt 1 - Vague
+# -----------------------------
+vague_system_prompt = """
+You are a helpful AI assistant.
+"""
+
+# -----------------------------
+# Prompt 2 - Clear and Constrained
+# -----------------------------
+clear_system_prompt = """
 You are an internal insurance support assistant.
 
 Role:
-- Help employees understand insurance-related policies and procedures.
+- Help employees understand insurance policies.
 
 Scope:
 - Answer only insurance-related questions.
-- Do not make up information.
-- Do not answer unrelated questions.
+- Do not invent information.
 
 Constraints:
-- Keep responses under 120 words.
+- Keep the answer under 120 words.
+- Use bullet points.
 - Use a professional and friendly tone.
-- Use bullet points whenever appropriate.
-- If you do not know the answer, respond:
-  "I don't have enough information to answer that. Please consult the official insurance documentation."
+- If unsure, say:
+"I don't have enough information to answer that. Please consult the official insurance documentation."
 """
 
-# ----------------------------
-# User Prompt (Task 1)
-# ----------------------------
+print("=" * 60)
+print("PROMPT 1 - VAGUE")
+print("=" * 60)
 
-user_prompt = """
-What is the difference between comprehensive car insurance and third-party car insurance?
-"""
-
-response = client.models.generate_content(
+response1 = client.models.generate_content(
     model=model_name,
     contents=[
-        system_prompt,
-        user_prompt
-    ]
+        vague_system_prompt,
+        user_question,
+    ],
 )
 
-print("\n========== RESPONSE ==========\n")
-print(response.text)
+print(response1.text)
+
+print("\n")
+
+print("=" * 60)
+print("PROMPT 2 - CLEAR")
+print("=" * 60)
+
+response2 = client.models.generate_content(
+    model=model_name,
+    contents=[
+        clear_system_prompt,
+        user_question,
+    ],
+)
+
+print(response2.text)
