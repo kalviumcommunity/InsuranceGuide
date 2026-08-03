@@ -1,10 +1,11 @@
+import json
 import os
 from datetime import datetime
 
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
 
-# Load environment variables
 load_dotenv()
 
 api_key = os.getenv("GEMINI_API_KEY")
@@ -15,17 +16,63 @@ if not api_key:
 
 client = genai.Client(api_key=api_key)
 
-system_message = "You are a helpful AI assistant."
-user_message = "What is Retrieval-Augmented Generation (RAG)? Explain it in 3 sentences."
+SYSTEM_MESSAGE = (
+    "Return only valid JSON with exactly these fields: "
+    "answer and source. The answer must be concise and grounded."
+)
+USER_MESSAGE = (
+    "Explain Retrieval-Augmented Generation (RAG) in one sentence and "
+    "name the source as 'insurance-guide-rag-notes'."
+)
+REQUIRED_FIELDS = {"answer", "source"}
+STRUCTURED_SCHEMA = types.Schema(
+    type=types.Type.OBJECT,
+    properties={
+        "answer": types.Schema(type=types.Type.STRING),
+        "source": types.Schema(type=types.Type.STRING),
+    },
+    required=["answer", "source"],
+)
 
-try:
+
+def request_structured_answer(question: str) -> str:
     response = client.models.generate_content(
         model=model_name,
-        contents=[system_message, user_message]
+        contents=[SYSTEM_MESSAGE, question],
+        config=types.GenerateContentConfig(
+            temperature=0.2,
+            response_mime_type="application/json",
+            response_schema=STRUCTURED_SCHEMA,
+        ),
     )
+    return response.text
 
-    print("\nModel Response:\n")
-    print(response.text)
+
+def parse_structured_response(raw_text: str):
+    try:
+        payload = json.loads(raw_text)
+    except json.JSONDecodeError as exc:
+        return None, f"Malformed JSON: {exc.msg} at position {exc.pos}."
+
+    if not isinstance(payload, dict):
+        return None, "Model response must be a JSON object."
+
+    missing_fields = sorted(REQUIRED_FIELDS.difference(payload.keys()))
+    if missing_fields:
+        return None, f"Missing required field(s): {', '.join(missing_fields)}"
+
+    return payload, None
+
+
+try:
+    raw_response = request_structured_answer(USER_MESSAGE)
+    parsed_response, parse_error = parse_structured_response(raw_response)
+
+    print("\nStructured Model Response:\n")
+    if parse_error:
+        print(f"Recovery status: {parse_error}")
+    else:
+        print(parsed_response)
 
     os.makedirs("logs", exist_ok=True)
 
@@ -33,14 +80,16 @@ try:
         log.write("=" * 60 + "\n")
         log.write(f"Timestamp: {datetime.now()}\n\n")
         log.write("SYSTEM MESSAGE:\n")
-        log.write(system_message + "\n\n")
+        log.write(SYSTEM_MESSAGE + "\n\n")
         log.write("USER MESSAGE:\n")
-        log.write(user_message + "\n\n")
+        log.write(USER_MESSAGE + "\n\n")
         log.write("MODEL RESPONSE:\n")
-        log.write(response.text + "\n\n")
+        log.write(raw_response + "\n\n")
+        log.write("PARSED RESULT:\n")
+        log.write(json.dumps(parsed_response or {}, ensure_ascii=True) + "\n\n")
 
-        if hasattr(response, "usage_metadata"):
-            log.write(f"TOKEN USAGE:\n{response.usage_metadata}\n")
+        if parse_error:
+            log.write(f"ERROR:\n{parse_error}\n\n")
 
         log.write("=" * 60 + "\n\n")
 
