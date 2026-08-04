@@ -1,0 +1,22 @@
+Skipping unsupported file: .gitkeep
+Skipping unsupported file: sample.xyz
+
+DOCUMENT SUMMARY
+
+============================================================
+Source : sample.md
+Length : 128 characters
+Sample : # Property Insurance  Property insurance protects homes and buildings.  It also covers losses caused
+============================================================
+
+============================================================
+Source : sample.pdf
+Length : 124 characters
+Sample : Travel Insurance     Travel insurance protects travelers from medical emergencies, trip cancellation
+============================================================
+
+============================================================
+Source : sample.txt
+Length : 161 characters
+Sample : Insurance policies protect individuals against financial losses.  Health insurance covers medical ex  
+============================================================

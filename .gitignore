@@ -5,12 +5,13 @@
 # Environment variables and secrets
 .env
 
-# Local document data (large/real corpora only — small illustrative samples are tracked)
+# Local document data
 data/*
-!data/raw
-!data/cleaned
 !data/.gitkeep
-
+!data/sample.txt
+!data/sample.md
+!data/sample.pdf
+!data/sample.xyz
 # Node dependencies (future use)
 node_modules/
 
