@@ -5,10 +5,16 @@
 # Environment variables and secrets
 .env
 
-# Local document data
-data/
+# Local document data (large/real corpora only — small illustrative samples are tracked)
+data/*
+!data/raw
+!data/cleaned
+!data/.gitkeep
 
 # Node dependencies (future use)
 node_modules/
 
 logs/
+
+__pycache__/
+*.pyc
