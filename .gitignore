@@ -6,8 +6,12 @@
 .env
 
 # Local document data
-data/
-
+data/*
+!data/.gitkeep
+!data/sample.txt
+!data/sample.md
+!data/sample.pdf
+!data/sample.xyz
 # Node dependencies (future use)
 node_modules/
 

@@ -1,0 +1,21 @@
+Chunking strategy comparison on claims_guideline.txt
+============================================================
+Paragraph strategy: chunks=6, avg_size=106.7 chars
+Fixed-overlap strategy: chunks=3, avg_size=261.0 chars
+
+Recommended choice: paragraph chunking
+Reason: the corpus is structured as chapter headings plus short topical paragraphs.
+Paragraph boundaries preserve the policy narrative and avoid cutting across legal/claims logic.
+
+Sample paragraph chunks:
+[1] CHAPTER 1: INTAKE PROCEDURE
+[2] When a new claim is reported, the adjuster must verify the policyholder’s identity and confirm the policy is active as of the loss date. All communication should be logged in the claims system.
+[3] CHAPTER 2: DAMAGE ASSESSMENT
+[4] Adjusters must document damage with photographs and a written assessment. Estimates should reference the insurer’s approved pricing schedule. Discrepancies over $5,000 require senior adjuster sign-off.
+[5] CHAPTER 3: SETTLEMENT
+[6] Settlement offers must be communicated in writing. The policyholder has the right to dispute the offer within 15 days — disputes are escalated to the Claims Review Board.
+
+Sample fixed-overlap chunks:
+[1] CHAPTER 1: INTAKE PROCEDURE When a new claim is reported, the adjuster must verify the policyholder’s identity and confirm the policy is active as of the loss date. All communication should be logged in the claims system. CHAPTER 2: DAMAGE ASSESSMENT Adjusters must document damage
+[2] claims system. CHAPTER 2: DAMAGE ASSESSMENT Adjusters must document damage with photographs and a written assessment. Estimates should reference the insurer’s approved pricing schedule. Discrepancies over $5,000 require senior adjuster sign-off. CHAPTER 3: SETTLEMENT Settlement offers must be communicated in writing. The policyholder has the
+[3] offers must be communicated in writing. The policyholder has the right to dispute the offer within 15 days — disputes are escalated to the Claims Review Board.

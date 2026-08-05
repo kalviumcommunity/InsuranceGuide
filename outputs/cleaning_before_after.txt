@@ -1,0 +1,28 @@
+=== claims_guideline.txt ===
+chars: 802 -> 650
+--- BEFORE (first 200 chars) ---
+CLAIMS ADJUSTER GUIDELINE MANUAL
+
+
+CHAPTER 1: INTAKE PROCEDURE
+
+When a new claim is re-
+ported, the adjuster must verify the policyholderâ€™s identity and confirm the policy is active as of the loss d
+--- AFTER (first 200 chars) ---
+CHAPTER 1: INTAKE PROCEDURE
+
+When a new claim is reported, the adjuster must verify the policyholder’s identity and confirm the policy is active as of the loss date. All communication should be logged
+
+=== property_policy.txt ===
+chars: 1228 -> 989
+--- BEFORE (first 200 chars) ---
+ACME PROPERTY INSURANCE — POLICY DOCUMENT
+
+SECTION 1: COVERAGE OVERVIEW
+
+This policy provides cover-
+age for dwelling, personal property, and liability protection subject to the terms below. The insur
+--- AFTER (first 200 chars) ---
+SECTION 1: COVERAGE OVERVIEW
+
+This policy provides coverage for dwelling, personal property, and liability protection subject to the terms below. The insured’s dwelling is covered against fire, windst

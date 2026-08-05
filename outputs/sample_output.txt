@@ -5,3 +5,4 @@ Model Response:
 
 Retrieval-Augmented Generation (RAG) is an AI framework that enhances large language models (LLMs) by giving them access to external, up-to-date, and verifiable information. It addresses common LLM limitations like hallucinations or outdated knowledge by grounding their responses in specific, retrieved data. Before generating an answer, RAG first queries a knowledge base (like a database or document collection) to fetch relevant context, which it then uses to inform the LLM's final output.
 
+

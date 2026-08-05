@@ -1,0 +1,16 @@
+{
+  "valid_case": {
+    "raw": "{\"answer\":\"RAG combines retrieval of relevant documents with generation so the model can answer using grounded evidence.\",\"source\":\"insurance-guide-rag-notes\"}",
+    "parsed": {
+      "answer": "RAG combines retrieval of relevant documents with generation so the model can answer using grounded evidence.",
+      "source": "insurance-guide-rag-notes"
+    },
+    "status": "valid"
+  },
+  "malformed_then_recovered_case": {
+    "raw": "{\"answer\": \"RAG retrieves evidence and then conditions a reply on it.\", \"source\": \"insurance-guide-rag-notes\"",
+    "parsed": null,
+    "status": "recovered_by_validation",
+    "error": "Malformed JSON: Expecting ',' delimiter at position 124."
+  }
+}

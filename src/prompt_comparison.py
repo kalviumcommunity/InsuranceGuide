@@ -3,7 +3,8 @@ import os
 from dotenv import load_dotenv
 from google import genai
 
-# Load environment variables
+from prompts.answer import render_prompt
+
 load_dotenv()
 
 api_key = os.getenv("GEMINI_API_KEY")
@@ -14,44 +15,54 @@ if not api_key:
 
 client = genai.Client(api_key=api_key)
 
-# ----------------------------
-# System Prompt (Task 2)
-# ----------------------------
-
-system_prompt = """
-You are an internal insurance support assistant.
-
-Role:
-- Help employees understand insurance-related policies and procedures.
-
-Scope:
-- Answer only insurance-related questions.
-- Do not make up information.
-- Do not answer unrelated questions.
-
-Constraints:
-- Keep responses under 120 words.
-- Use a professional and friendly tone.
-- Use bullet points whenever appropriate.
-- If you do not know the answer, respond:
-  "I don't have enough information to answer that. Please consult the official insurance documentation."
-"""
-
-# ----------------------------
-# User Prompt (Task 1)
-# ----------------------------
-
-user_prompt = """
-What is the difference between comprehensive car insurance and third-party car insurance?
-"""
-
-response = client.models.generate_content(
-    model=model_name,
-    contents=[
-        system_prompt,
-        user_prompt
-    ]
+user_question = (
+    "What is the difference between comprehensive car insurance "
+    "and third-party car insurance?"
 )
 
-print("\n========== RESPONSE ==========\n")
-print(response.text)
+# Context used by the reusable template
+context = """
+Comprehensive car insurance covers damage to your own vehicle as well as
+third-party liabilities. Third-party insurance only covers damages caused
+to another person's vehicle, property, or injuries.
+"""
+
+# -----------------------------
+# Prompt 1 - Using Reusable Template
+# -----------------------------
+vague_system_prompt = render_prompt(
+    context=context,
+    question=user_question,
+)
+
+# -----------------------------
+# Prompt 2 - Reusing the Same Template
+# -----------------------------
+clear_system_prompt = render_prompt(
+    context=context,
+    question=user_question,
+)
+
+print("=" * 60)
+print("PROMPT 1 - TEMPLATE")
+print("=" * 60)
+
+response1 = client.models.generate_content(
+    model=model_name,
+    contents=vague_system_prompt,
+)
+
+print(response1.text)
+
+print("\n")
+
+print("=" * 60)
+print("PROMPT 2 - TEMPLATE REUSED")
+print("=" * 60)
+
+response2 = client.models.generate_content(
+    model=model_name,
+    contents=clear_system_prompt,
+)
+
+print(response2.text)
