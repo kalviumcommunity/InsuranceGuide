@@ -1,0 +1,52 @@
+=== No-overlap sample ===
+
+CHAPTER 1: INTAKE PROCEDURE
+
+When a new claim is reported, the adjuster must verify the policyholder’s identity and confirm the policy is active as of the loss date. All communication should be logged in the claims system.
+
+CHAPTER 2: DAMAGE ASSESSMENT
+
+Adjusters must document damage with photographs and a written assessment. Estimates should reference the insurer’s approved pricing schedule. Discrepancies over $5,000 require senior adjuster sign-off.
+
+CHAPTER 3: SETTLEMENT
+
+Settlement offers must be communicated in writing. The policyholder has
+
+=== Overlap sample ===
+
+CHAPTER 1: INTAKE PROCEDURE
+
+When a new claim is reported, the adjuster must verify the policyholder’s identity and confirm the policy is active as of the loss date. All communication should be logged in the claims system.
+
+CHAPTER 2: DAMAGE ASSESSMENT
+
+Adjusters must document damage with photographs and a written assessment. Estimates should reference the insurer’s approved pricing schedule. Discrepancies over $5,000 require senior adjuster sign-off.
+
+CHAPTER 3: SETTLEMENT
+
+Settlement offers must be communicated in writing. The policyholder has
+
+=== Overlap boundary demo ===
+
+Boundary phrase without overlap: CHAPTER 1: INTAKE PROCEDURE
+
+When a new claim is reported, the adjuster must verify the policyholder’s identity and confirm the policy is active as of the loss date. All communication should be logged in the claims system.
+
+CHAPTER 2: DAMAGE ASSESSMENT
+
+Adjusters must document damage with photographs and a written assessment. Estimates should reference the insurer’s approved pricing schedule. Discrepancies over $5,000 require senior adjuster sign-off.
+
+CHAPTER 3: SETTLEMENT
+
+Settlement offers must be communicated in writing. The policyholder has
+Boundary phrase with overlap: CHAPTER 1: INTAKE PROCEDURE
+
+When a new claim is reported, the adjuster must verify the policyholder’s identity and confirm the policy is active as of the loss date. All communication should be logged in the claims system.
+
+CHAPTER 2: DAMAGE ASSESSMENT
+
+Adjusters must document damage with photographs and a written assessment. Estimates should reference the insurer’s approved pricing schedule. Discrepancies over $5,000 require senior adjuster sign-off.
+
+CHAPTER 3: SETTLEMENT
+
+Settlement offers must be communicated in writing. The policyholder has
