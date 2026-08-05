@@ -1,0 +1,37 @@
+
+FULL INGESTION SUMMARY
+
+Total source documents : 3
+Successfully ingested  : 3
+Failed documents       : 0
+Total chunks created   : 3
+
+Validation : PASSED
+
+Sample Chunks
+
+
+Source: sample.md
+Chunk Index: 0
+Page: None
+Section: Property Insurance
+Text:
+# Property Insurance  Property insurance protects homes and buildings.  It also covers losses caused by fire, storms, an
+----------------------------------------------------------------------
+
+Source: sample.pdf
+Chunk Index: 0
+Page: 1
+Section: None
+Text:
+Travel Insurance    Travel insurance protects travelers from medical emergencies, trip cancellations, and  lost baggage.
+----------------------------------------------------------------------
+
+Source: sample.txt
+Chunk Index: 0
+Page: None
+Section: None
+Text:
+Insurance policies protect individuals against financial losses.  Health insurance covers medical expenses.  Motor insur
+----------------------------------------------------------------------
+
