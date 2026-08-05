@@ -16,6 +16,4 @@ data/*
 node_modules/
 
 logs/
-
-__pycache__/
-*.pyc
+venv/
