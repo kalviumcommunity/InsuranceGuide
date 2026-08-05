@@ -17,14 +17,12 @@ def load_md(file_path):
 
 def load_pdf(file_path):
     reader = PdfReader(file_path)
-    text = ""
 
-    for page in reader.pages:
-        extracted = page.extract_text()
-        if extracted:
-            text += extracted + "\n"
-
-    return text
+    # Pages are joined with a form-feed ("\f"), the standard page-break
+    # marker, so page numbers can still be recovered later for metadata
+    # (see src/chunk_metadata.py) without changing the return type.
+    pages = [page.extract_text() or "" for page in reader.pages]
+    return "\f".join(pages)
 
 
 def load_documents(folder):
