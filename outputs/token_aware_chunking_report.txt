@@ -1,0 +1,62 @@
+Token-aware chunking report
+============================================================
+Tokenizer: gpt-4o-mini
+Chunk size: 120 tokens
+Overlap: 25 tokens
+
+No-overlap chunks: count=2, average_tokens=70.5
+Overlap chunks: count=2, average_tokens=83.0
+
+Justification:
+- 120 tokens is small enough to stay well below the typical gpt-4o-mini context window while still preserving a complete claims-policy idea.
+- 25-token overlap preserves the prior boundary context so cross-chunk meaning remains intact without massively raising cost.
+
+Overlap demonstration:
+Boundary phrase without overlap: CHAPTER 1: INTAKE PROCEDURE
+
+When a new claim is reported, the adjuster must verify the policyholder’s identity and confirm the policy is active as of the loss date. All communication should be logged in the claims system.
+
+CHAPTER 2: DAMAGE ASSESSMENT
+
+Adjusters must document damage with photographs and a written assessment. Estimates should reference the insurer’s approved pricing schedule. Discrepancies over $5,000 require senior adjuster sign-off.
+
+CHAPTER 3: SETTLEMENT
+
+Settlement offers must be communicated in writing. The policyholder has
+Boundary phrase with overlap: CHAPTER 1: INTAKE PROCEDURE
+
+When a new claim is reported, the adjuster must verify the policyholder’s identity and confirm the policy is active as of the loss date. All communication should be logged in the claims system.
+
+CHAPTER 2: DAMAGE ASSESSMENT
+
+Adjusters must document damage with photographs and a written assessment. Estimates should reference the insurer’s approved pricing schedule. Discrepancies over $5,000 require senior adjuster sign-off.
+
+CHAPTER 3: SETTLEMENT
+
+Settlement offers must be communicated in writing. The policyholder has
+
+Sample no-overlap chunk:
+CHAPTER 1: INTAKE PROCEDURE
+
+When a new claim is reported, the adjuster must verify the policyholder’s identity and confirm the policy is active as of the loss date. All communication should be logged in the claims system.
+
+CHAPTER 2: DAMAGE ASSESSMENT
+
+Adjusters must document damage with photographs and a written assessment. Estimates should reference the insurer’s approved pricing schedule. Discrepancies over $5,000 require senior adjuster sign-off.
+
+CHAPTER 3: SETTLEMENT
+
+Settlement offers must be communicated in writing. The policyholder has
+
+Sample overlap chunk:
+CHAPTER 1: INTAKE PROCEDURE
+
+When a new claim is reported, the adjuster must verify the policyholder’s identity and confirm the policy is active as of the loss date. All communication should be logged in the claims system.
+
+CHAPTER 2: DAMAGE ASSESSMENT
+
+Adjusters must document damage with photographs and a written assessment. Estimates should reference the insurer’s approved pricing schedule. Discrepancies over $5,000 require senior adjuster sign-off.
+
+CHAPTER 3: SETTLEMENT
+
+Settlement offers must be communicated in writing. The policyholder has
