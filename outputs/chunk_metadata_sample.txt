@@ -1,0 +1,24 @@
+Tagged 7 chunks from 3 documents.
+
+source=sample.md chunk_index=0 char_start=0 page=None section=Property Insurance
+text: '# Property Insurance\n\nProperty insurance protects homes and buildings.\n\nIt also '
+
+source=sample.md chunk_index=1 char_start=60 page=None section=Property Insurance
+text: 'buildings.\n\nIt also covers losses caused by fire, storms, and theft.'
+
+source=sample.pdf chunk_index=0 char_start=0 page=1 section=None
+text: 'Travel Insurance  \n \nTravel insurance protects travelers from medical emergencie'
+
+source=sample.pdf chunk_index=1 char_start=60 page=1 section=None
+text: 'm medical emergencies, trip cancellations, and \nlost baggage.  '
+
+source=sample.txt chunk_index=0 char_start=0 page=None section=None
+text: 'Insurance policies protect individuals against financial losses.\n\nHealth insuran'
+
+source=sample.txt chunk_index=1 char_start=60 page=None section=None
+text: 'ses.\n\nHealth insurance covers medical expenses.\n\nMotor insurance protects vehicl'
+
+=== Traceback demo ===
+Retrieved chunk claims to come from: sample.pdf (chunk 1, page 1, section None)
+Text at that exact location in the source document: 'm medical emergencies, trip cancellations, and \nlost baggage.  '
+Matches retrieved chunk text: True
