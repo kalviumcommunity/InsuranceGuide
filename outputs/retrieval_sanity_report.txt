@@ -1,0 +1,84 @@
+RETRIEVAL SANITY TEST REPORT
+======================================================================
+
+Embedding model : gemini-embedding-001
+Total chunks tested : 3
+
+TEST 1 - Property insurance
+
+Query : What does property insurance protect?
+Expected source : sample.md
+Unrelated source : sample.txt
+Result : PASS
+
+Top-ranked sources:
+1. sample.md | score=0.8038 | chunk=0
+2. sample.txt | score=0.6798 | chunk=0
+3. sample.pdf | score=0.6173 | chunk=0
+Expected source score : 0.8038
+Unrelated source score : 0.6798
+Note : Related source ranked above unrelated source.
+
+----------------------------------------------------------------------
+
+TEST 2 - Travel insurance
+
+Query : What does travel insurance cover?
+Expected source : sample.pdf
+Unrelated source : sample.md
+Result : PASS
+
+Top-ranked sources:
+1. sample.pdf | score=0.7378 | chunk=0
+2. sample.txt | score=0.6309 | chunk=0
+3. sample.md | score=0.6245 | chunk=0
+Expected source score : 0.7378
+Unrelated source score : 0.6245
+Note : Related source ranked above unrelated source.
+
+----------------------------------------------------------------------
+
+TEST 3 - Health insurance
+
+Query : What expenses does health insurance cover?
+Expected source : sample.txt
+Unrelated source : sample.pdf
+Result : PASS
+
+Top-ranked sources:
+1. sample.txt | score=0.6911 | chunk=0
+2. sample.md | score=0.5993 | chunk=0
+3. sample.pdf | score=0.5604 | chunk=0
+Expected source score : 0.6911
+Unrelated source score : 0.5604
+Note : Related source ranked above unrelated source.
+
+----------------------------------------------------------------------
+
+TEST 4 - Ambiguous insurance query
+
+Query : What insurance covers expenses?
+Expected source : sample.txt
+Unrelated source : sample.pdf
+Result : BORDERLINE
+
+Top-ranked sources:
+1. sample.txt | score=0.7034 | chunk=0
+2. sample.pdf | score=0.6291 | chunk=0
+3. sample.md | score=0.6272 | chunk=0
+Expected source score : 0.7034
+Unrelated source score : 0.6291
+Note : The query is ambiguous because it does not specify the insurance type or expense. This shows that vague queries can reduce retrieval confidence.
+
+----------------------------------------------------------------------
+
+Test count : 4
+Passes : 3
+Failures : 0
+Borderline / surprising cases : 1
+
+Overall observation:
+3 known relevance tests passed. 1 ambiguous/borderline case was recorded to show how vague queries can affect retrieval.
+
+Why this matters:
+Sanity testing helps verify that semantically related chunks rank above unrelated chunks before retrieval is trusted in the RAG system.

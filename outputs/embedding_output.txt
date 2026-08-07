@@ -1,0 +1,42 @@
+EMBEDDING OUTPUT
+======================================================================
+Chunks Embedded : 3
+Vector Length : 3072
+
+Sample Stored Embeddings
+
+----------------------------------------------------------------------
+Source : sample.md
+Chunk Index : 0
+Page : None
+Section : Property Insurance
+Text : # Property Insurance
+
+Property insurance protects homes and buildings.
+
+It also covers losses caused by fire, storms, an
+Vector Length : 3072
+Vector Sample : [0.0023346115, 0.0165589, 0.006662968, -0.053423367, 0.0108833015, 0.015066593, 0.02533268, 0.0373759]
+----------------------------------------------------------------------
+Source : sample.pdf
+Chunk Index : 0
+Page : 1
+Section : None
+Text : Travel Insurance 
+ 
+Travel insurance protects travelers from medical emergencies, trip cancellations, and 
+lost baggage.
+Vector Length : 3072
+Vector Sample : [-0.022049645, 0.0039693615, 0.009325503, -0.04770699, 0.0047502723, 0.019307185, 0.023765018, 0.0014346833]
+----------------------------------------------------------------------
+Source : sample.txt
+Chunk Index : 0
+Page : None
+Section : None
+Text : Insurance policies protect individuals against financial losses.
+
+Health insurance covers medical expenses.
+
+Motor insur
+Vector Length : 3072
+Vector Sample : [0.02093684, 0.03876066, 0.0109770065, -0.031148609, 0.011459091, 0.0422022, -0.00021219533, 0.0020778622]
