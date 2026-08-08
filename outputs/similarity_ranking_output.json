@@ -1,0 +1,77 @@
+{
+  "query": "Which policy covers damage to my home caused by fire?",
+  "metric": "cosine_similarity",
+  "justification": "Cosine similarity is appropriate because embedding vectors are compared by direction in vector space, and this metric captures semantic overlap without being dominated by vector magnitude.",
+  "ranked_chunks": [
+    {
+      "text": "Property insurance protects homes and buildings against fire and storm damage.",
+      "metadata": {
+        "source": "sample.md",
+        "chunk_index": 0,
+        "section": "Property Insurance"
+      },
+      "embedding": [
+        0.95,
+        0.1,
+        0.2
+      ],
+      "score": 0.9990922459194095
+    },
+    {
+      "text": "Motor insurance protects vehicles against accidents and theft.",
+      "metadata": {
+        "source": "sample.txt",
+        "chunk_index": 2,
+        "section": null
+      },
+      "embedding": [
+        0.25,
+        0.15,
+        0.95
+      ],
+      "score": 0.4193512409915922
+    },
+    {
+      "text": "Health insurance covers medical expenses for treatment and hospitalization.",
+      "metadata": {
+        "source": "sample.txt",
+        "chunk_index": 1,
+        "section": null
+      },
+      "embedding": [
+        0.2,
+        0.9,
+        0.1
+      ],
+      "score": 0.33481945073698394
+    },
+    {
+      "text": "Claims are settled after the insurer approves evidence and completes assessment.",
+      "metadata": {
+        "source": "claims_guideline.txt",
+        "chunk_index": 3,
+        "section": "Settlement"
+      },
+      "embedding": [
+        0.05,
+        0.1,
+        0.85
+      ],
+      "score": 0.23191788644650976
+    },
+    {
+      "text": "Travel insurance covers emergency trips and overseas medical support.",
+      "metadata": {
+        "source": "sample.txt",
+        "chunk_index": 4,
+        "section": null
+      },
+      "embedding": [
+        -0.7,
+        0.05,
+        0.1
+      ],
+      "score": -0.9375120256006159
+    }
+  ]
+}
