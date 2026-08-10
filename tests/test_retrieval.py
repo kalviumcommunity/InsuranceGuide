@@ -86,3 +86,6 @@ def test_k_larger_than_corpus_is_capped_at_available_chunks(tmp_path, monkeypatc
     results = retrieval.retrieve("query", k=10, collection=collection)
 
     assert len(results) == 3
+
+
+
