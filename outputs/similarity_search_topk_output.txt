@@ -1,0 +1,121 @@
+SIMILARITY SEARCH & TOP-K RETRIEVAL - SAMPLE RUN
+======================================================================
+Embedding model : gemini-embedding-001
+Collection      : insurance_chunks
+Query           : What does my policy cover if my house is damaged by fire or a storm?
+
+*** PLACEHOLDER RUN - NOT A LIVE API CALL ***
+No GEMINI_API_KEY was available in the environment that generated this
+file, so the query embedding step (embed_query) was NOT called against
+the real Gemini embedding API. The chunks, sources, and metadata below
+are the REAL contents of the three chunks already indexed in
+outputs/chroma_local (see outputs/indexing_summary.txt), but the
+"score" values below are a simple lexical word-overlap stand-in
+(Jaccard similarity on lowercase words), NOT cosine similarity from
+real embeddings. They are only meant to show the shape of a result
+(score/text/metadata) and how the top-k cutoff behaves.
+
+Before submitting, run this for real:
+    python src/retrieval.py
+with GEMINI_API_KEY and EMBEDDING_MODEL set in your .env. That run will
+overwrite this file with real cosine-similarity scores from the actual
+embedding model.
+======================================================================
+
+k = 1  ->  1 chunk(s) returned
+----------------------------------------------------------------------
+  rank         : 1
+  score        : 0.0741   (placeholder: lexical overlap, not cosine similarity)
+  source       : sample.md
+  chunk_index  : 0
+  section      : Property Insurance
+  text         : # Property Insurance
+
+Property insurance protects homes and buildings.
+
+It also covers losses caused by fire, storms, and theft.
+
+k = 3  ->  3 chunk(s) returned
+----------------------------------------------------------------------
+  rank         : 1
+  score        : 0.0741   (placeholder: lexical overlap, not cosine similarity)
+  source       : sample.md
+  chunk_index  : 0
+  section      : Property Insurance
+  text         : # Property Insurance
+
+Property insurance protects homes and buildings.
+
+It also covers losses caused by fire, storms, and theft.
+
+  rank         : 2
+  score        : 0.0000   (placeholder: lexical overlap, not cosine similarity)
+  source       : sample.pdf
+  chunk_index  : 0
+  section      : None
+  text         : Travel Insurance
+
+Travel insurance protects travelers from medical emergencies, trip cancellations, and
+lost baggage.
+
+  rank         : 3
+  score        : 0.0000   (placeholder: lexical overlap, not cosine similarity)
+  source       : sample.txt
+  chunk_index  : 0
+  section      : None
+  text         : Insurance policies protect individuals against financial losses.
+
+Health insurance covers medical expenses.
+
+Motor insurance protects vehicles against accidents.
+
+k = 5  ->  3 chunk(s) returned
+----------------------------------------------------------------------
+  rank         : 1
+  score        : 0.0741   (placeholder: lexical overlap, not cosine similarity)
+  source       : sample.md
+  chunk_index  : 0
+  section      : Property Insurance
+  text         : # Property Insurance
+
+Property insurance protects homes and buildings.
+
+It also covers losses caused by fire, storms, and theft.
+
+  rank         : 2
+  score        : 0.0000   (placeholder: lexical overlap, not cosine similarity)
+  source       : sample.pdf
+  chunk_index  : 0
+  section      : None
+  text         : Travel Insurance
+
+Travel insurance protects travelers from medical emergencies, trip cancellations, and
+lost baggage.
+
+  rank         : 3
+  score        : 0.0000   (placeholder: lexical overlap, not cosine similarity)
+  source       : sample.txt
+  chunk_index  : 0
+  section      : None
+  text         : Insurance policies protect individuals against financial losses.
+
+Health insurance covers medical expenses.
+
+Motor insurance protects vehicles against accidents.
+
+OBSERVATION
+----------------------------------------------------------------------
+Increasing k returns more chunks from the same ranked list; it does not
+change the order of chunks already returned by a smaller k. Once k
+reaches the total number of indexed chunks (3, in this small corpus),
+asking for a larger k (k=5 above) stops returning new results and
+simply returns everything in the collection - k=3 and k=5 return the
+same three chunks in the same order.
+
+Even with placeholder scores, the ranking above is directionally
+correct: the query is about fire/storm damage to a house, and the
+sample.md chunk (Property Insurance - fire, storms, theft) is the only
+one of the three that shares meaningful vocabulary with the query, so
+it ranks first. This is why the demo is still useful to inspect even
+before the real embedding call is made - but the actual scores that go
+into the RAG grounding step must come from real embeddings.
