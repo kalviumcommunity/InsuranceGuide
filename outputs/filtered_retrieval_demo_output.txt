@@ -1,0 +1,65 @@
+FILTERED RETRIEVAL DEMO
+========================
+Query            : What does my policy cover if my house is damaged by fire or a storm?
+Unfiltered k     : 3
+Filter predicate : {"section": "Property Insurance"}
+Keyword terms    : fire, storm, home, policy
+
+UNFILTERED VECTOR SEARCH
+------------------------------------------------------------
+rank      : 1
+score     : 0.8920
+hybrid    : 0.9010
+keyword   : 4
+source    : sample.md
+section   : Property Insurance
+text      : Property insurance covers homes against fire, lightning, storm, and wind damage.
+
+rank      : 2
+score     : 0.6060
+hybrid    : 0.6060
+keyword   : 0
+source    : sample.md
+section   : Business Insurance
+text      : This policy covers business interruption for office equipment and cyber incidents.
+
+rank      : 3
+score     : 0.5750
+hybrid    : 0.5750
+keyword   : 1
+source    : claims_guideline.txt
+section   : Claims Process
+text      : Claims for wind and hail damage should be filed within 30 days of discovery.
+
+FILTERED VECTOR SEARCH
+------------------------------------------------------------
+rank      : 1
+score     : 0.8920
+hybrid    : 0.9010
+keyword   : 4
+source    : sample.md
+section   : Property Insurance
+text      : Property insurance covers homes against fire, lightning, storm, and wind damage.
+
+rank      : 2
+score     : 0.8560
+hybrid    : 0.8640
+keyword   : 3
+source    : sample.md
+section   : Property Insurance
+text      : Homeowners may file a claim when the insured dwelling suffers fire, water, or storm damage.
+
+rank      : 3
+score     : 0.6390
+hybrid    : 0.6390
+keyword   : 2
+source    : sample.md
+section   : Property Insurance
+text      : The policy excludes wear-and-tear and refunds a damaged structure only after the deductible is met.
+
+OBSERVATION
+------------------------------------------------------------
+The unfiltered query pulls a broad business-hours/commercial chunk and a claims-process chunk that are not the user's immediate home-cover question.
+The filtered call scopes the retrieval to the Property Insurance section, leaving only property-relevant chunks in the result set.
+The filter therefore improves precision by removing irrelevant or loosely related chunks from the top-k context.
+The hybrid score only adds a small keyword boost to help keep exact home/fire/storm terms visible without turning the vector search into a plain lexical match.

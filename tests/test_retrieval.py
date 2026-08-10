@@ -88,4 +88,37 @@ def test_k_larger_than_corpus_is_capped_at_available_chunks(tmp_path, monkeypatc
     assert len(results) == 3
 
 
+def test_retrieve_accepts_a_metadata_where_filter(tmp_path, monkeypatch):
+    collection = _sample_collection(tmp_path)
+    monkeypatch.setattr(retrieval, "embed_query", lambda query: [0.9, 0.05, 0.05])
+
+    results = retrieval.retrieve(
+        "What does property insurance cover?",
+        k=3,
+        collection=collection,
+        where={"source": "sample.md"},
+    )
+
+    assert len(results) == 1
+    assert results[0]["metadata"]["source"] == "sample.md"
+    assert "Property insurance" in results[0]["text"]
+
+
+def test_retrieve_supports_keyword_and_hybrid_boosting(tmp_path, monkeypatch):
+    collection = _sample_collection(tmp_path)
+    monkeypatch.setattr(retrieval, "embed_query", lambda query: [0.9, 0.05, 0.05])
+
+    results = retrieval.retrieve(
+        "What does property insurance cover?",
+        k=3,
+        collection=collection,
+        keyword_terms=["property", "insurance"],
+        hybrid=True,
+    )
+
+    assert len(results) == 3
+    assert results[0]["metadata"]["source"] == "sample.md"
+    assert results[0]["keyword_hits"] >= 1
+
+
 
