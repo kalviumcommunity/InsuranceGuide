@@ -86,9 +86,17 @@ def get_collection():
 # Retrieval
 # ---------------------------------------------------------
 
-def retrieve(query, k=3, collection=None):
+def retrieve(query, k=3, collection=None, where=None, keyword_terms=None, hybrid=False):
     """Embed `query`, run a top-k similarity search against the vector
     database, and return the k most similar chunks.
+
+    Optional parameters:
+        where - Chroma metadata filter predicate. Restricts the vector
+                search to a subset of the corpus before ranking.
+        keyword_terms - exact terms that can be matched against the
+                         returned chunk text for precision boosting.
+        hybrid - if True, the raw vector scores are re-ranked using the
+                 keyword match count once results have been returned.
 
     Each returned item has:
         score    - similarity score, higher means more similar. The
@@ -98,17 +106,28 @@ def retrieve(query, k=3, collection=None):
         text     - the retrieved chunk text
         metadata - source-tracking metadata attached at chunking time
                    (source, chunk_index, char_start, page, section)
+        keyword_hits - number of explicit keyword terms found in the
+                       chunk text, if keyword_terms are supplied.
+        hybrid_score - optional re-ranked score if hybrid=True.
     """
     if collection is None:
         collection = get_collection()
 
+    if keyword_terms is None:
+        keyword_terms = []
+    normalized_terms = [term.lower() for term in keyword_terms if isinstance(term, str) and term.strip()]
+
     query_vector = embed_query(query)
 
-    results = collection.query(
-        query_embeddings=[query_vector],
-        n_results=k,
-        include=["documents", "metadatas", "distances"],
-    )
+    search_args = {
+        "query_embeddings": [query_vector],
+        "n_results": k,
+        "include": ["documents", "metadatas", "distances"],
+    }
+    if where:
+        search_args["where"] = where
+
+    results = collection.query(**search_args)
 
     documents = results.get("documents", [[]])[0]
     metadatas = results.get("metadatas", [[]])[0]
@@ -116,13 +135,31 @@ def retrieve(query, k=3, collection=None):
 
     retrieved = []
     for text, metadata, distance in zip(documents, metadatas, distances):
-        retrieved.append(
-            {
-                "score": round(1 - distance, 4),
-                "text": text,
-                "metadata": metadata,
-            }
-        )
+        score = round(1 - distance, 4)
+        keyword_hits = 0
+        if normalized_terms:
+            normalized_text = text.lower()
+            for term in normalized_terms:
+                if term in normalized_text:
+                    keyword_hits += 1
+
+        hybrid_score = score
+        if hybrid and normalized_terms:
+            hybrid_score = round(score + min(keyword_hits * 0.05, 0.25), 4)
+
+        item = {
+            "score": score,
+            "text": text,
+            "metadata": metadata,
+            "keyword_hits": keyword_hits,
+            "hybrid_score": hybrid_score,
+        }
+        if hybrid:
+            item["score"] = hybrid_score
+        retrieved.append(item)
+
+    if hybrid and normalized_terms:
+        retrieved.sort(key=lambda item: item["hybrid_score"], reverse=True)
 
     return retrieved
 
@@ -136,7 +173,9 @@ def format_result_block(rank, result):
     return "\n".join(
         [
             f"  rank         : {rank}",
-            f"  score        : {result['score']}",
+            f"  score        : {result.get('score')}",
+            f"  hybrid_score : {result.get('hybrid_score')}",
+            f"  keyword_hits : {result.get('keyword_hits', 0)}",
             f"  source       : {metadata.get('source')}",
             f"  chunk_index  : {metadata.get('chunk_index')}",
             f"  section      : {metadata.get('section') or None}",
@@ -188,8 +227,93 @@ def run_demo(query=SAMPLE_QUERY, k_values=SAMPLE_K_VALUES):
     print(f"\nSample results saved to {OUTPUT_FILE}")
 
 
+FILTERED_OUTPUT_FILE = BASE_DIR / "outputs" / "filtered_retrieval_demo_output.txt"
+
+
+def run_filtered_demo(
+    query=SAMPLE_QUERY,
+    filter_meta={"section": "Property Insurance"},
+    keyword_terms=None,
+    k=3,
+):
+    """Show the same top-k query both unfiltered and filtered.
+
+    The report is committed under outputs/ so the repository carries a
+    sample result showing where the metadata restriction changes the
+    retrieved context and how hybrid scoring adds exact-term precision.
+    """
+    if keyword_terms is None:
+        keyword_terms = ["fire", "storm", "home", "policy"]
+
+    collection = get_collection()
+
+    unfiltered = retrieve(query, k=k, collection=collection, keyword_terms=keyword_terms, hybrid=True)
+    filtered = retrieve(query, k=k, collection=collection, where=filter_meta, keyword_terms=keyword_terms, hybrid=True)
+
+    lines = [
+        "FILTERED RETRIEVAL DEMO",
+        "=" * 84,
+        f"Query            : {query}",
+        f"Unfiltered k     : {k}",
+        f"Filter predicate : {filter_meta}",
+        f"Keyword terms    : {', '.join(keyword_terms)}",
+        "",
+        "UNFILTERED VECTOR SEARCH",
+        "-" * 84,
+    ]
+
+    for rank, result in enumerate(unfiltered, start=1):
+        lines.extend(
+            [
+                f"rank      : {rank}",
+                f"score     : {result.get('score')}",
+                f"hybrid    : {result.get('hybrid_score')}",
+                f"keyword   : {result.get('keyword_hits', 0)}",
+                f"source    : {result.get('metadata', {}).get('source')}",
+                f"section   : {result.get('metadata', {}).get('section')}",
+                f"text      : {result.get('text')}",
+                "",
+            ]
+        )
+
+    lines.extend([
+        "FILTERED VECTOR SEARCH",
+        "-" * 84,
+    ])
+
+    for rank, result in enumerate(filtered, start=1):
+        lines.extend(
+            [
+                f"rank      : {rank}",
+                f"score     : {result.get('score')}",
+                f"hybrid    : {result.get('hybrid_score')}",
+                f"keyword   : {result.get('keyword_hits', 0)}",
+                f"source    : {result.get('metadata', {}).get('source')}",
+                f"section   : {result.get('metadata', {}).get('section')}",
+                f"text      : {result.get('text')}",
+                "",
+            ]
+        )
+
+    lines.extend([
+        "OBSERVATION",
+        "-" * 84,
+        "The filtered call scopes retrieval to the Property Insurance section and should remove broad policy or unrelated product chunks from the ranking list.",
+        "That is expected to improve precision, not just recall, because the filter and the keyword/phrase terms narrow the context stringently.",
+        "The hybrid score adds a small explicit-term boost to vector results that contain the exact wording the question asks about.",
+    ])
+
+    text_report = "\n".join(lines)
+    print(text_report)
+
+    FILTERED_OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
+    FILTERED_OUTPUT_FILE.write_text(text_report, encoding="utf-8")
+    print(f"\nFiltered search sample results saved to {FILTERED_OUTPUT_FILE}")
+
+
 def main():
     run_demo()
+    run_filtered_demo()
 
 
 if __name__ == "__main__":
