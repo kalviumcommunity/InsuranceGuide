@@ -1,0 +1,141 @@
+CHUNK RE-RANKING FOR PRECISION - SAMPLE RUN
+======================================================================
+Query                    : What does my policy cover if my house is damaged by fire or a storm?
+Candidate set size (k)   : 10 (only 3 chunks are currently indexed, so all 3 are returned)
+Candidates retrieved     : 3
+Final top-k after rerank : 3
+Scorer used              : custom_rerank_score (no GEMINI_API_KEY configured in this environment)
+
+*** VECTOR SCORES BELOW ARE PLACEHOLDER - RERANK SCORES ARE REAL ***
+No GEMINI_API_KEY / chromadb were available in the environment that
+generated this file, so retrieve()'s embedding + Chroma search could
+not be run live (same limitation as outputs/similarity_search_topk_output.txt).
+The "vector_score" values below are illustrative placeholder numbers,
+chosen to reproduce a realistic and common embedding failure mode: a
+chunk that is only broadly "about insurance" (motor insurance) scores
+slightly higher on raw embedding similarity than the chunk that
+actually answers the fire/storm question (property insurance), because
+embeddings can be dominated by general topic similarity rather than the
+specific detail asked about.
+
+The "rerank_score" values ARE real: they were produced by actually
+running custom_rerank_score() from src/rerank.py against these three
+real chunks (the same three chunks already indexed in
+outputs/chroma_local) and this real query. Nothing about the
+re-ranking step itself is mocked - only the upstream vector-search
+scores are a placeholder stand-in, exactly as before.
+
+Before you submit, run this for real:
+    python src/rerank.py
+with GEMINI_API_KEY set (to also exercise llm_rerank_score) and a fully
+indexed vector store. That run will overwrite this file with live
+vector scores from retrieve().
+======================================================================
+
+CANDIDATE SET (initial vector-similarity order, k=10 requested)
+----------------------------------------------------------------------
+  rank         : 1
+  vector_score : 0.4235   (placeholder)
+  source       : sample.txt
+  chunk_index  : 0
+  section      : None
+  text         : Insurance policies protect individuals against financial losses.
+
+Health insurance covers medical expenses.
+
+Motor insurance protects vehicles against accidents.
+
+  rank         : 2
+  vector_score : 0.4198   (placeholder)
+  source       : sample.md
+  chunk_index  : 0
+  section      : Property Insurance
+  text         : # Property Insurance
+
+Property insurance protects homes and buildings.
+
+It also covers losses caused by fire, storms, and theft.
+
+  rank         : 3
+  vector_score : 0.3054   (placeholder)
+  source       : sample.pdf
+  chunk_index  : 0
+  section      : None
+  text         : Travel Insurance
+
+Travel insurance protects travelers from medical emergencies, trip cancellations, and
+lost baggage.
+
+BEFORE RE-RANKING (top 3 by vector score)
+----------------------------------------------------------------------
+  rank         : 1
+  vector_score : 0.4235   (placeholder)
+  source       : sample.txt
+  chunk_index  : 0
+  section      : None
+  text         : Insurance policies protect individuals against financial losses. Health insurance covers medical expenses. Motor insurance protects vehicles against accidents.
+
+  rank         : 2
+  vector_score : 0.4198   (placeholder)
+  source       : sample.md
+  chunk_index  : 0
+  section      : Property Insurance
+  text         : # Property Insurance Property insurance protects homes and buildings. It also covers losses caused by fire, storms, and theft.
+
+  rank         : 3
+  vector_score : 0.3054   (placeholder)
+  source       : sample.pdf
+  chunk_index  : 0
+  section      : None
+  text         : Travel Insurance Travel insurance protects travelers from medical emergencies, trip cancellations, and lost baggage.
+
+AFTER RE-RANKING (top 3 by rerank score) - REAL, COMPUTED VALUES
+----------------------------------------------------------------------
+  rank         : 1
+  vector_score : 0.4198   (placeholder)
+  rerank_score : 1.4286
+  source       : sample.md
+  chunk_index  : 0
+  section      : Property Insurance
+  text         : # Property Insurance Property insurance protects homes and buildings. It also covers losses caused by fire, storms, and theft.
+
+  rank         : 2
+  vector_score : 0.4235   (placeholder)
+  rerank_score : 0.0
+  source       : sample.txt
+  chunk_index  : 0
+  section      : None
+  text         : Insurance policies protect individuals against financial losses. Health insurance covers medical expenses. Motor insurance protects vehicles against accidents.
+
+  rank         : 3
+  vector_score : 0.3054   (placeholder)
+  rerank_score : 0.0
+  source       : sample.pdf
+  chunk_index  : 0
+  section      : None
+  text         : Travel Insurance Travel insurance protects travelers from medical emergencies, trip cancellations, and lost baggage.
+
+COMPARISON
+----------------------------------------------------------------------
+Order before re-ranking : ['sample.txt', 'sample.md', 'sample.pdf']
+Order after re-ranking  : ['sample.md', 'sample.txt', 'sample.pdf']
+Order changed           : True
+Rank-1 changed from sample.txt (motor insurance - not relevant to the
+question) to sample.md (property insurance - the chunk that actually
+mentions fire and storm damage). This is exactly the failure mode
+re-ranking is meant to catch: the first-pass vector score ranked a
+generically-related chunk above the specifically-relevant one.
+
+Re-ranking scores the query against the full chunk text a second time,
+instead of relying only on the single embedding distance from the
+first pass. When the two signals disagree, as they do here, the
+re-ranked order is expected to line up better with what a human would
+judge as directly relevant to the query. The cost is one extra scoring
+call per candidate - cheap for a local custom scorer like this one, but
+real latency and API cost for an LLM or cross-encoder scorer - so
+re-rank a modest candidate set (10-20), not the whole corpus, and
+reserve it for cases where precision in the final context matters more
+than raw speed. With only 3 chunks indexed right now, the candidate set
+and the corpus are the same size; re-ranking's value will be easier to
+see once more documents are indexed and k=10 actually trims a larger
+candidate pool.
