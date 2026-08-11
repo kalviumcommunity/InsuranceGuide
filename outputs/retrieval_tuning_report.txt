@@ -1,0 +1,77 @@
+RETRIEVAL TUNING EXPERIMENT
+======================================================================
+Embedding model : gemini-embedding-001
+Collection : insurance_chunks
+Total test queries : 3
+
+----------------------------------------------------------------------
+SETTING A - k=1
+Top-1 Hit Rate : 100.0%
+Top-1 Hit Rate : 100.0%
+
+Query 1: What does property insurance protect?
+Expected source : sample.md
+Ranked results:
+1. sample.md (score=0.6076)
+Top-1 hit : True
+Top-1 hit : True
+
+Query 2: What does travel insurance cover?
+Expected source : sample.pdf
+Ranked results:
+1. sample.pdf (score=0.4756)
+Top-1 hit : True
+Top-1 hit : True
+
+Query 3: What expenses does health insurance cover?
+Expected source : sample.txt
+Ranked results:
+1. sample.txt (score=0.3822)
+Top-1 hit : True
+Top-1 hit : True
+
+----------------------------------------------------------------------
+SETTING B - k=3
+Top-1 Hit Rate : 100.0%
+Top-3 Hit Rate : 100.0%
+
+Query 1: What does property insurance protect?
+Expected source : sample.md
+Ranked results:
+1. sample.md (score=0.6076)
+2. sample.txt (score=0.3597)
+3. sample.pdf (score=0.2346)
+Top-1 hit : True
+Top-3 hit : True
+
+Query 2: What does travel insurance cover?
+Expected source : sample.pdf
+Ranked results:
+1. sample.pdf (score=0.4756)
+2. sample.txt (score=0.2618)
+3. sample.md (score=0.2491)
+Top-1 hit : True
+Top-3 hit : True
+
+Query 3: What expenses does health insurance cover?
+Expected source : sample.txt
+Ranked results:
+1. sample.txt (score=0.3822)
+2. sample.md (score=0.1985)
+3. sample.pdf (score=0.1208)
+Top-1 hit : True
+Top-3 hit : True
+
+======================================================================
+
+BEST SETTING
+Setting : SETTING A
+k : 1
+Top-1 Hit Rate : 100.0%
+Top-1 Hit Rate : 100.0%
+
+JUSTIFICATION
+The selected setting achieved the strongest retrieval relevance on the known test queries. The experiment shows how changing k affects the number of relevant chunks returned.
+
+Conclusion
+Retrieval settings should be evaluated using known queries and expected sources rather than assuming that the first configuration is optimal.
