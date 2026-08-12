@@ -1,0 +1,22 @@
+{
+  "question": "What does property insurance cover?",
+  "grounded_answer": "Property insurance protects homes and buildings and covers losses caused by fire, storms, and theft. [Source: sample.md#0]",
+  "fallback_answer": "There is not enough information in the provided context to answer that.",
+  "comparison": {
+    "question": "What does property insurance cover?",
+    "without_retrieval": {
+      "answer": "Property insurance generally covers damage to a home or structure, but this answer is not grounded in the retrieved excerpts.",
+      "grounded": false
+    },
+    "with_retrieval": {
+      "answer": "Property insurance protects homes and buildings and covers losses caused by fire, storms, and theft. [Source: sample.md#0]",
+      "grounded": true,
+      "supporting_chunks": [
+        {
+          "source": "sample.md",
+          "chunk_index": 0
+        }
+      ]
+    }
+  }
+}
