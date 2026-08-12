@@ -1,0 +1,46 @@
+RAG PIPELINE OUTPUT
+======================================================================
+Embedding model : gemini-embedding-001
+Chat model      : gemini-2.5-flash
+Query           : What does property insurance protect?
+
+RETRIEVED SOURCES
+----------------------------------------------------------------------
+1. sample.md | chunk=0 | score=0.8038
+2. sample.txt | chunk=0 | score=0.6798
+3. sample.pdf | chunk=0 | score=0.6173
+
+ASSEMBLED CONTEXT
+----------------------------------------------------------------------
+[1] Source: sample.md | Chunk: 0 | Section: Property Insurance
+# Property Insurance
+
+Property insurance protects homes and buildings.
+
+It also covers losses caused by fire, storms, and theft.
+
+[2] Source: sample.txt | Chunk: 0
+Insurance policies protect individuals against financial losses.
+
+Health insurance covers medical expenses.
+
+Motor insurance protects vehicles against accidents.
+
+[3] Source: sample.pdf | Chunk: 0
+Travel Insurance 
+ 
+Travel insurance protects travelers from medical emergencies, trip cancellations, and 
+lost baggage.
+
+GENERATED ANSWER
+----------------------------------------------------------------------
+Property insurance protects homes and buildings. It also covers losses caused by fire, storms, and theft.
+
+PIPELINE FLOW
+----------------------------------------------------------------------
+User Query
+    -> Query Embedding
+    -> ChromaDB Retrieval
+    -> Context Assembly
+    -> Gemini Generation
+    -> Answer + Sources
