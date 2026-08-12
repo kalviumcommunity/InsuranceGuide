@@ -1,0 +1,17 @@
+RETRIEVAL FAILURE ANALYSIS
+========================
+
+The main failure modes to inspect are: chunking mismatch, missing metadata filters,
+poor query wording, and embedding mismatch between the user's question and the stored chunk.
+
+- q1: low-scoring case for query: What does property insurance cover if my house is damaged by fire or a storm?
+  relevant = ['sample.md::chunk_0', 'sample.md::chunk_1']
+  retrieved = ['sample.md::chunk_0', 'sample.md::chunk_1', 'sample.txt::chunk_0', 'sample.txt::chunk_1', 'sample.pdf::chunk_0']
+  Likely causes:
+    * chunking may be too broad or the answer spans multiple chunks
+    * metadata filters may be missing when a query is narrowly scoped
+    * query wording may not mention the exact insurance concept or section
+    * embedding mismatch may occur if the query and corpus were embedded with different models
+
+- q2: no major failure; retrieved the expected answer in the top result.
+- q3: no major failure; retrieved the expected answer in the top result.
