@@ -1,0 +1,30 @@
+[
+  {
+    "id": "q1",
+    "query": "What does property insurance cover if my house is damaged by fire or a storm?",
+    "relevant_chunk_ids": [
+      "sample.md::chunk_0",
+      "sample.md::chunk_1"
+    ],
+    "expected_source": "sample.md",
+    "notes": "The fire/storm wording should match the Property Insurance section and rank the property chunk above other insurance topics."
+  },
+  {
+    "id": "q2",
+    "query": "What does travel insurance cover?",
+    "relevant_chunk_ids": [
+      "sample.pdf::chunk_0"
+    ],
+    "expected_source": "sample.pdf",
+    "notes": "Travel insurance covers trip cancellations, medical emergencies, and lost baggage."
+  },
+  {
+    "id": "q3",
+    "query": "Does health insurance cover medical expenses?",
+    "relevant_chunk_ids": [
+      "sample.txt::chunk_0"
+    ],
+    "expected_source": "sample.txt",
+    "notes": "The relevant chunk includes both health and motor insurance text in the same document, so a well-ranked result should include the health portion."
+  }
+]
