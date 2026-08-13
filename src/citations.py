@@ -29,6 +29,20 @@ load_dotenv()
 API_KEY = os.getenv("GEMINI_API_KEY")
 CHAT_MODEL = os.getenv("CHAT_MODEL", "gemini-2.0-flash")
 
+# Retrieval-quality guardrail defaults (overridable via .env)
+RETRIEVAL_MIN_SCORE = float(os.getenv("RETRIEVAL_MIN_SCORE", "0.25"))
+RETRIEVAL_MIN_CHUNKS = int(os.getenv("RETRIEVAL_MIN_CHUNKS", "1"))
+RETRIEVAL_MIN_MEAN = os.getenv("RETRIEVAL_MIN_MEAN")
+RETRIEVAL_MIN_MEAN = float(RETRIEVAL_MIN_MEAN) if RETRIEVAL_MIN_MEAN else None
+
+try:
+    from guardrails import check_retrieval_quality
+except Exception:
+    # Allow the module to be imported in environments where the helper
+    # might not be available (e.g. tests that stub imports).
+    def check_retrieval_quality(*args, **kwargs):
+        return {"passed": True, "reason": "guardrails_missing"}
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 OUTPUT_FILE = BASE_DIR / "outputs" / "cited_answers_sample.txt"
 
@@ -208,6 +222,20 @@ def answer_with_citations(question, k=4, chunks=None, llm_fn=None):
             "fabricated_markers": [],
             "used_fallback": True,
             "chunks_considered": 0,
+            "quality": {"passed": False, "reason": "no_chunks"},
+        }
+
+    # Assess retrieval quality and refuse when upstream retrieval is weak.
+    quality = check_retrieval_quality(chunks, min_score=RETRIEVAL_MIN_SCORE, min_chunks_above=RETRIEVAL_MIN_CHUNKS, min_mean_score=RETRIEVAL_MIN_MEAN)
+    if not quality.get("passed"):
+        # Do not call the model — refuse safely instead of hallucinating.
+        return {
+            "answer": NO_CONTEXT_FALLBACK,
+            "citations": {},
+            "fabricated_markers": [],
+            "used_fallback": True,
+            "chunks_considered": len(chunks),
+            "quality": quality,
         }
 
     prompt, assembly = build_cited_prompt(question, chunks)
@@ -222,6 +250,7 @@ def answer_with_citations(question, k=4, chunks=None, llm_fn=None):
         "fabricated_markers": fabricated,
         "used_fallback": False,
         "chunks_considered": len(chunks),
+        "quality": quality,
     }
 
 
@@ -334,6 +363,26 @@ def run_demo():
         "caused by fire, storms, and theft' - the citation is verified as "
         "supported by its source, not just plausible-sounding."
     )
+    report.append("")
+
+    report.append("=" * 70)
+    report.append("EXAMPLE 4 - WEAK RETRIEVAL QUALITY REFUSAL (low scores)")
+    report.append("=" * 70)
+    report.append(f"Question: {SAMPLE_QUESTION}")
+    report.append(
+        "Simulating the case where retrieval returned results but their similarity\n"
+        "scores are too low to trust. The pipeline should refuse without calling the model."
+    )
+    # Build a low-quality chunk list (scores below common thresholds)
+    low_quality_chunks = [
+        {"score": 0.05, "text": "Unrelated text about unrelated topics.", "metadata": {"source": "other.md", "chunk_index": 0}},
+        {"score": 0.07, "text": "Some general insurance fluff, not on topic.", "metadata": {"source": "other.md", "chunk_index": 1}},
+    ]
+
+    result_4 = answer_with_citations(SAMPLE_QUESTION, chunks=low_quality_chunks, llm_fn=llm_fn)
+    report.append(f"used_fallback   : {result_4['used_fallback']}")
+    report.append(f"quality_report  : {result_4.get('quality')}")
+    report.append(f"answer          : {result_4['answer']}")
     report.append("")
 
     report.append("=" * 70)
