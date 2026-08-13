@@ -1,0 +1,70 @@
+SOURCE CITATION & ATTRIBUTION - SAMPLE RUN
+======================================================================
+Chunk source : PLACEHOLDER (no live vector store / API in this environment)
+Answer source: demo_llm_fn (hand-written stand-in, NOT a live model call)
+
+======================================================================
+EXAMPLE 1 - CITED ANSWER WITH SUPPORTING SOURCES
+======================================================================
+Question: What does my policy cover if my house is damaged by fire or a storm?
+
+ANSWER:
+Your policy covers damage to your dwelling from fire and storms [1]. It does not cover travel-related losses or vehicle accidents directly - those fall under the separate travel [3] and motor [2] sections rather than property coverage.
+
+Cited markers found in answer : ['1', '2', '3']
+Fabricated markers detected    : []
+
+CITATION MAP (marker -> real source document + location):
+----------------------------------------------------------------------
+  [1] -> source: sample.md
+       chunk_index: 0  section: Property Insurance
+       text: # Property Insurance
+
+Property insurance protects homes and buildings.
+
+It also covers losses caused by fire, storms, and theft.
+
+  [2] -> source: sample.txt
+       chunk_index: 0  section: None
+       text: Insurance policies protect individuals against financial losses.
+
+Health insurance covers medical expenses.
+
+Motor insurance protects vehicles against accidents.
+
+  [3] -> source: sample.pdf
+       chunk_index: 0  section: None
+       text: Travel Insurance
+
+Travel insurance protects travelers from medical emergencies, trip cancellations, and lost baggage.
+
+VERIFYING CITATION [1] AGAINST THE ORIGINAL CHUNK TEXT
+----------------------------------------------------------------------
+Marker [1] found       : True
+Source document        : sample.md
+Chunk index             : 0
+Section                : Property Insurance
+Original chunk text     : # Property Insurance
+
+Property insurance protects homes and buildings.
+
+It also covers losses caused by fire, storms, and theft.
+Claim check: the answer says fire/storm damage to the dwelling is covered and cites [1]; the chunk above literally says 'covers losses caused by fire, storms, and theft' - the citation is verified as supported by its source, not just plausible-sounding.
+
+======================================================================
+EXAMPLE 2 - FABRICATED CITATION DETECTION
+======================================================================
+Simulated (bad) model answer: Commercial fishing vessels are covered up to $250,000 under the marine endorsement [4].
+Citation map only has markers: ['[1]', '[2]', '[3]']
+Fabricated markers detected  : ['4']
+[4] does not correspond to any chunk that was actually retrieved - this answer would be rejected/flagged rather than shown to a user as-is, because a citation to a source that was never provided is a fabricated citation, worse than no citation at all.
+
+======================================================================
+EXAMPLE 3 - NO-SOURCE FALLBACK (nothing relevant retrieved)
+======================================================================
+Question: What is the maximum coverage for a commercial fishing vessel under this policy?
+Simulating the case where retrieval/re-ranking found nothing relevant enough to support an answer (e.g. an upstream relevance gate filtered every candidate out) by passing an empty chunk list.
+used_fallback   : True
+answer          : I don't have enough information in the provided documents to answer that.
+citations       : {}
+No model call was made at all for this case - there was nothing to ground an answer in, so the pipeline refuses rather than letting the model invent a plausible-sounding but unsupported (and uncited, or worse, falsely cited) answer.
