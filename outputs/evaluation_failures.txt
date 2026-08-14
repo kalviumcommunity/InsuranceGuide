@@ -1,0 +1,153 @@
+FAILURES
+============================================================
+
+{
+  "id": "q1",
+  "query": "What does property insurance cover if my house is damaged by fire or a storm?",
+  "answer": "Your policy covers damage to your dwelling from fire and storms [1]. It does not cover travel-related losses or vehicle accidents directly - those fall under the separate travel [3] and motor [2] sections rather than property coverage.",
+  "used_fallback": false,
+  "fabricated_markers": [],
+  "cited_markers": [
+    "[1]",
+    "[2]",
+    "[3]"
+  ],
+  "citation_map_summary": {
+    "[1]": {
+      "source": "sample.md",
+      "chunk_index": 0
+    },
+    "[2]": {
+      "source": "sample.txt",
+      "chunk_index": 0
+    },
+    "[3]": {
+      "source": "sample.pdf",
+      "chunk_index": 0
+    }
+  },
+  "correctness": true,
+  "grounded": true,
+  "citation_checks": [
+    {
+      "marker": "[1]",
+      "found": true,
+      "source": "sample.md",
+      "supports": true
+    },
+    {
+      "marker": "[2]",
+      "found": true,
+      "source": "sample.txt",
+      "supports": false
+    },
+    {
+      "marker": "[3]",
+      "found": true,
+      "source": "sample.pdf",
+      "supports": false
+    }
+  ],
+  "citation_accuracy": 0.3333
+}
+
+{
+  "id": "q2",
+  "query": "What does travel insurance cover?",
+  "answer": "Your policy covers damage to your dwelling from fire and storms [1]. It does not cover travel-related losses or vehicle accidents directly - those fall under the separate travel [3] and motor [2] sections rather than property coverage.",
+  "used_fallback": false,
+  "fabricated_markers": [],
+  "cited_markers": [
+    "[1]",
+    "[2]",
+    "[3]"
+  ],
+  "citation_map_summary": {
+    "[1]": {
+      "source": "sample.md",
+      "chunk_index": 0
+    },
+    "[2]": {
+      "source": "sample.txt",
+      "chunk_index": 0
+    },
+    "[3]": {
+      "source": "sample.pdf",
+      "chunk_index": 0
+    }
+  },
+  "correctness": true,
+  "grounded": true,
+  "citation_checks": [
+    {
+      "marker": "[1]",
+      "found": true,
+      "source": "sample.md",
+      "supports": false
+    },
+    {
+      "marker": "[2]",
+      "found": true,
+      "source": "sample.txt",
+      "supports": false
+    },
+    {
+      "marker": "[3]",
+      "found": true,
+      "source": "sample.pdf",
+      "supports": true
+    }
+  ],
+  "citation_accuracy": 0.3333
+}
+
+{
+  "id": "q3",
+  "query": "Does health insurance cover medical expenses?",
+  "answer": "Your policy covers damage to your dwelling from fire and storms [1]. It does not cover travel-related losses or vehicle accidents directly - those fall under the separate travel [3] and motor [2] sections rather than property coverage.",
+  "used_fallback": false,
+  "fabricated_markers": [],
+  "cited_markers": [
+    "[1]",
+    "[2]",
+    "[3]"
+  ],
+  "citation_map_summary": {
+    "[1]": {
+      "source": "sample.md",
+      "chunk_index": 0
+    },
+    "[2]": {
+      "source": "sample.txt",
+      "chunk_index": 0
+    },
+    "[3]": {
+      "source": "sample.pdf",
+      "chunk_index": 0
+    }
+  },
+  "correctness": true,
+  "grounded": true,
+  "citation_checks": [
+    {
+      "marker": "[1]",
+      "found": true,
+      "source": "sample.md",
+      "supports": false
+    },
+    {
+      "marker": "[2]",
+      "found": true,
+      "source": "sample.txt",
+      "supports": true
+    },
+    {
+      "marker": "[3]",
+      "found": true,
+      "source": "sample.pdf",
+      "supports": true
+    }
+  ],
+  "citation_accuracy": 0.6667
+}
+
