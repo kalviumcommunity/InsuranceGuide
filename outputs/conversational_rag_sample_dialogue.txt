@@ -1,0 +1,40 @@
+CONVERSATIONAL RAG - SAMPLE MULTI-TURN DIALOGUE
+======================================================================
+
+Chunk source : PLACEHOLDER (no live vector store / API in this environment)
+Answer source: demo_llm_fn (hand-written stand-in, NOT a live model call)
+
+TURN 1
+----------------------------------------------------------------------
+User question       : What does my policy cover if my house is damaged by fire or a storm?
+Was rewritten        : False (no prior history yet, so used as-is)
+Query used for retrieval : What does my policy cover if my house is damaged by fire or a storm?
+Answer               : Your policy covers damage to your dwelling from fire and storms [1].
+Citations            : ['[1]', '[2]', '[3]']
+
+TURN 2 (follow-up)
+----------------------------------------------------------------------
+User question (raw)      : Does it exclude anything?
+Needed rewriting         : True
+Rewriter used            : custom_rewrite_query (no API key configured)
+Rewritten standalone query: Does it exclude anything, specifically regarding policy cover house damaged fire storm?
+
+Content-word overlap BEFORE rewriting (raw follow-up vs each chunk):
+  sample.md    shared_content_words=0
+  sample.txt   shared_content_words=0
+  sample.pdf   shared_content_words=0
+Content-word overlap AFTER rewriting (rewritten query vs each chunk):
+  sample.md    shared_content_words=1
+  sample.txt   shared_content_words=0
+  sample.pdf   shared_content_words=0
+
+Query actually used for retrieval : Does it exclude anything, specifically regarding policy cover house damaged fire storm?
+Answer                            : Your policy covers damage to your dwelling from fire and storms [1].
+Citations                         : ['[1]', '[2]', '[3]']
+Fabricated markers                : []
+
+OBSERVATION
+----------------------------------------------------------------------
+Before rewriting, the raw follow-up 'Does it exclude anything?' shares 0 content word(s) with even its best-matching chunk (sample.md) - every chunk ties at that score, so this query cannot distinguish between them at all. After folding in turn 1's key terms, the rewritten query shares 1 content word(s) with sample.md specifically, while the other two chunks still share none - exactly the chunk turn 1's answer came from, proving the follow-up was resolved using conversation history rather than guessed from its own words.
+This overlap score is a deliberately simple, exact-word proxy (no stemming or synonym matching), so it likely UNDERSTATES the improvement: it cannot see that the rewrite's 'storm'/'house' and the chunk's 'storms'/'homes' mean the same thing, which a real embedding model would capture. The real retrieve()/rerank() pipeline (used automatically once a vector store and API key are available) would be expected to show an even clearer improvement than shown here.
+Known limitation of the custom (no-API-key) rewriter: it always folds in recent topic words, so if a follow-up genuinely changed subject entirely instead of continuing the same one, this heuristic could wrongly drag the old topic's vocabulary into the new query. An LLM rewriter (llm_rewrite_query) does not have this problem because it actually reasons about whether the follow-up continues or changes the topic.
