@@ -1,0 +1,11 @@
+RAG EVALUATION SUMMARY
+============================================================
+Queries evaluated: 3
+Correctness (expected source present): 1.000
+Grounding (no fallback, no fabricated markers): 1.000
+Mean citation accuracy (keyword support heuristic): 0.444
+
+Per-query details:
+- q1: correctness=True grounded=True citation_accuracy=0.3333
+- q2: correctness=True grounded=True citation_accuracy=0.3333
+- q3: correctness=True grounded=True citation_accuracy=0.6667
