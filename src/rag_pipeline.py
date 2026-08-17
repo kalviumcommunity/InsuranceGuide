@@ -25,16 +25,21 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 OUTPUT_FILE = BASE_DIR / "outputs" / "rag_pipeline_output.txt"
 
-CHAT_MODEL = os.getenv("CHAT_MODEL")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-if not GEMINI_API_KEY:
-    raise ValueError("GEMINI_API_KEY not found in .env")
+def get_chat_model():
+    """Read the configured chat model lazily from the environment."""
+    model = os.getenv("CHAT_MODEL", "gemini-2.0-flash")
+    if not model:
+        raise ValueError("CHAT_MODEL not found in environment.")
+    return model
 
-if not CHAT_MODEL:
-    raise ValueError("CHAT_MODEL not found in .env")
 
-client = genai.Client(api_key=GEMINI_API_KEY)
+def get_gemini_client():
+    """Create the Gemini client only when needed and only if the API key is configured."""
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY not found in environment.")
+    return genai.Client(api_key=api_key)
 
 
 # ---------------------------------------------------------
@@ -135,6 +140,9 @@ def generate_answer(query, context):
     if not context:
         return "I could not find relevant context for this question."
 
+    client = get_gemini_client()
+    model_name = get_chat_model()
+
     prompt = f"""
 Answer the user's question using ONLY the context provided below.
 
@@ -151,7 +159,7 @@ Question:
 """
 
     response = client.models.generate_content(
-        model=CHAT_MODEL,
+        model=model_name,
         contents=prompt,
         config=types.GenerateContentConfig(
             temperature=0.2,
@@ -169,6 +177,11 @@ def answer_query(query, k=3):
     """
     Run the complete RAG pipeline.
     """
+
+    if query is None or not str(query).strip():
+        raise ValueError("Question is required.")
+
+    query = str(query).strip()
 
     # Stage 1: Embed
     query_vector = embed_query_stage(query)
