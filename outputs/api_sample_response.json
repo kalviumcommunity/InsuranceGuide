@@ -1,0 +1,18 @@
+{
+  "status": "success",
+  "answer": "Property insurance covers damage to your home from fire or storm events.",
+  "sources": [
+    {
+      "source": "sample.md",
+      "chunk_index": 0,
+      "section": "Property Insurance",
+      "score": 0.98
+    }
+  ],
+  "metadata": {
+    "question": "What does property insurance cover?",
+    "top_k": 3,
+    "retrieved_chunks": 1,
+    "context_length": 167
+  }
+}
