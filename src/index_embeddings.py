@@ -1,106 +1,297 @@
+"""
+Index corpus embeddings into ChromaDB.
+
+Tasks covered:
+1. Load and prepare corpus chunks.
+2. Generate embeddings for every chunk.
+3. Store vector + text + metadata in ChromaDB.
+4. Validate indexed count against chunk count.
+5. Spot-check a stored record against its source chunk.
+6. Write an indexing summary report.
+"""
+
 import os
 from pathlib import Path
 
-import chromadb
 from dotenv import load_dotenv
 from google import genai
 
 from document_loader import load_documents
 from text_cleaning import clean
 from chunk_metadata import tag_chunks
+from vector_store import create_collection, COLLECTION_NAME
 
 
-# ------------------------------------------------------------
-# Environment configuration
-# ------------------------------------------------------------
+# ============================================================
+# CONFIGURATION
+# ============================================================
 
 load_dotenv()
 
-api_key = os.getenv("GEMINI_API_KEY")
-embedding_model = os.getenv("EMBEDDING_MODEL")
+API_KEY = os.getenv("GEMINI_API_KEY")
+EMBEDDING_MODEL = os.getenv(
+    "EMBEDDING_MODEL",
+    "gemini-embedding-001",
+)
 
-if not api_key:
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+DATA_FOLDER = BASE_DIR / "data"
+
+OUTPUT_FILE = (
+    BASE_DIR
+    / "outputs"
+    / "indexing_summary.txt"
+)
+
+EMBEDDING_DIMENSION = int(
+    os.getenv("EMBEDDING_DIMENSION", "3072")
+)
+
+
+# ============================================================
+# VALIDATION
+# ============================================================
+
+if not API_KEY:
     raise ValueError("GEMINI_API_KEY not found in .env")
 
-if not embedding_model:
-    raise ValueError("EMBEDDING_MODEL not found in .env")
+
+# ============================================================
+# GEMINI CLIENT
+# ============================================================
+
+client = genai.Client(api_key=API_KEY)
 
 
-# ------------------------------------------------------------
-# Configuration
-# ------------------------------------------------------------
-
-DATA_FOLDER = "data"
-VECTOR_DB_PATH = "vector_store"
-COLLECTION_NAME = "insurance_chunks"
-OUTPUT_FILE = "outputs/indexing_summary.txt"
-
-client = genai.Client(api_key=api_key)
-
-
-# ------------------------------------------------------------
-# Generate embedding
-# ------------------------------------------------------------
+# ============================================================
+# EMBEDDING
+# ============================================================
 
 def generate_embedding(text):
+    """
+    Generate one embedding vector using Gemini.
+    """
+
     response = client.models.embed_content(
-        model=embedding_model,
+        model=EMBEDDING_MODEL,
         contents=text,
     )
 
-    return response.embeddings[0].values
+    vector = response.embeddings[0].values
+
+    if len(vector) != EMBEDDING_DIMENSION:
+        raise ValueError(
+            f"Unexpected embedding dimension. "
+            f"Expected {EMBEDDING_DIMENSION}, "
+            f"got {len(vector)}"
+        )
+
+    return vector
 
 
-# ------------------------------------------------------------
-# Prepare all corpus chunks
-# ------------------------------------------------------------
+# ============================================================
+# PREPARE CORPUS
+# ============================================================
 
 def prepare_chunks():
-    documents = load_documents(DATA_FOLDER)
+    """
+    Load documents, clean text, and create tagged chunks.
+    """
+
+    print("\nLoading and preparing corpus...")
+
+    documents = load_documents(str(DATA_FOLDER))
 
     all_chunks = []
 
     for document in documents:
-        try:
-            cleaned_text = clean(document["text"])
 
-            cleaned_document = {
-                "source": document["source"],
-                "text": cleaned_text,
-            }
+        cleaned_text = clean(document["text"])
 
-            chunks = tag_chunks(cleaned_document)
-            all_chunks.extend(chunks)
+        cleaned_document = {
+            "source": document["source"],
+            "text": cleaned_text,
+        }
 
-        except Exception as error:
-            print(
-                f"Failed to process {document['source']}: {error}"
-            )
+        chunks = tag_chunks(cleaned_document)
+
+        all_chunks.extend(chunks)
 
     return all_chunks
 
 
-# ------------------------------------------------------------
-# Convert metadata into Chroma-compatible values
-# ------------------------------------------------------------
+# ============================================================
+# CREATE VECTOR RECORD
+# ============================================================
 
-def prepare_metadata(metadata):
+def create_vector_record(chunk):
+    """
+    Convert one chunk into a ChromaDB record.
+
+    Each record contains:
+    - stable ID
+    - embedding vector
+    - source text
+    - metadata
+    """
+
+    metadata = chunk.get("metadata", {})
+
+    source = metadata.get("source", "")
+    chunk_index = metadata.get("chunk_index", 0)
+
+    record_id = chunk.get(
+        "id",
+        f"{source}::chunk_{chunk_index}",
+    )
+
+    vector = generate_embedding(chunk["text"])
+
     return {
-        "source": str(metadata.get("source", "")),
-        "chunk_index": int(metadata.get("chunk_index", 0)),
-        "char_start": int(metadata.get("char_start", 0)),
-        "page": (
-            int(metadata["page"])
-            if metadata.get("page") is not None
-            else -1
-        ),
-        "section": str(metadata.get("section") or ""),
+        "id": record_id,
+        "embedding": vector,
+        "text": chunk["text"],
+        "metadata": {
+            "source": source,
+            "chunk_index": chunk_index,
+            "page": metadata.get("page", -1),
+            "section": metadata.get("section", ""),
+        },
     }
 
 
-# ------------------------------------------------------------
-# Main indexing process
-# ------------------------------------------------------------
+# ============================================================
+# SPOT CHECK
+# ============================================================
+
+def spot_check(collection, source_chunk, stored_record_id):
+    """
+    Read one stored record and compare it with the
+    original source chunk.
+    """
+
+    stored = collection.get(
+        ids=[stored_record_id],
+        include=[
+            "embeddings",
+            "documents",
+            "metadatas",
+        ],
+    )
+
+    if not stored["ids"]:
+        return {
+            "passed": False,
+            "reason": "Stored record was not found.",
+        }
+
+    stored_id = stored["ids"][0]
+    stored_text = stored["documents"][0]
+    stored_metadata = stored["metadatas"][0]
+    stored_vector = stored["embeddings"][0]
+
+    source_metadata = source_chunk.get("metadata", {})
+
+    text_matches = (
+        stored_text == source_chunk["text"]
+    )
+
+    source_matches = (
+        stored_metadata.get("source")
+        == source_metadata.get("source")
+    )
+
+    chunk_index_matches = (
+        stored_metadata.get("chunk_index")
+        == source_metadata.get("chunk_index")
+    )
+
+    vector_length_matches = (
+        len(stored_vector)
+        == EMBEDDING_DIMENSION
+    )
+
+    passed = (
+        text_matches
+        and source_matches
+        and chunk_index_matches
+        and vector_length_matches
+    )
+
+    print("\n# Spot-check Stored Record")
+    print()
+
+    if passed:
+        print("PASS - Stored record matches source chunk.")
+    else:
+        print("FAIL - Stored record does not match source chunk.")
+
+    print(f"ID             : {stored_id}")
+    print(
+        f"Source         : "
+        f"{stored_metadata.get('source')}"
+    )
+    print(
+        f"Chunk Index    : "
+        f"{stored_metadata.get('chunk_index')}"
+    )
+    print(
+        f"Page           : "
+        f"{stored_metadata.get('page')}"
+    )
+    print(
+        f"Section        : "
+        f"{stored_metadata.get('section')}"
+    )
+    print(
+        f"Vector Length  : "
+        f"{len(stored_vector)}"
+    )
+
+    print(
+        f"Text           : "
+        f"{stored_text[:150]}"
+    )
+
+    print(
+        f"Vector Sample  : "
+        f"{stored_vector[:8]}"
+    )
+
+    print(
+        f"\nText matches source chunk : "
+        f"{text_matches}"
+    )
+
+    print(
+        f"Source matches            : "
+        f"{source_matches}"
+    )
+
+    print(
+        f"Chunk index matches       : "
+        f"{chunk_index_matches}"
+    )
+
+    print(
+        f"Vector length matches     : "
+        f"{vector_length_matches}"
+    )
+
+    return {
+        "passed": passed,
+        "stored_id": stored_id,
+        "text_matches": text_matches,
+        "source_matches": source_matches,
+        "chunk_index_matches": chunk_index_matches,
+        "vector_length_matches": vector_length_matches,
+    }
+
+
+# ============================================================
+# MAIN
+# ============================================================
 
 def main():
 
@@ -108,385 +299,402 @@ def main():
     print("INDEXING EMBEDDINGS INTO CHROMADB")
     print("=" * 70)
 
-    print("\nLoading and preparing corpus...")
+    # --------------------------------------------------------
+    # Step 1: Prepare corpus
+    # --------------------------------------------------------
 
     chunks = prepare_chunks()
 
-    print(f"Chunks produced : {len(chunks)}")
+    expected_count = len(chunks)
 
-    if not chunks:
-        raise ValueError("No chunks were produced from the corpus.")
+    print(
+        f"Chunks produced : "
+        f"{expected_count}"
+    )
 
     # --------------------------------------------------------
-    # Create persistent ChromaDB client
+    # Step 2: Connect to ChromaDB
     # --------------------------------------------------------
 
     print("\nConnecting to ChromaDB...")
 
-    chroma_client = chromadb.PersistentClient(
-        path=VECTOR_DB_PATH
-    )
+    collection = create_collection()
 
-    collection = chroma_client.get_or_create_collection(
-        name=COLLECTION_NAME
-    )
-
-    # Clear the collection before indexing.
-    # This makes the indexing run reproducible and prevents
-    # duplicate records when the script is run again.
     existing_count = collection.count()
 
+    print(
+        f"Existing records found : "
+        f"{existing_count}"
+    )
+
+    # --------------------------------------------------------
+    # Step 3: Clear existing records
+    # --------------------------------------------------------
+
     if existing_count > 0:
+
         print(
-            f"Existing records found : {existing_count}"
-        )
-        print("Clearing collection before re-indexing...")
-        collection.delete(
-            where={}
+            "Clearing collection before re-indexing..."
         )
 
+        # IMPORTANT:
+        # Do NOT use collection.delete(where={})
+        # ChromaDB rejects an empty where filter.
+
+        existing_records = collection.get(
+            include=[]
+        )
+
+        existing_ids = existing_records.get(
+            "ids",
+            []
+        )
+
+        if existing_ids:
+            collection.delete(
+                ids=existing_ids
+            )
+
+        print("Collection cleared.")
+
     # --------------------------------------------------------
-    # Generate embeddings and prepare records
+    # Step 4: Generate embeddings
     # --------------------------------------------------------
 
-    print("\nGenerating embeddings and preparing records...")
+    print(
+        "\nGenerating embeddings and "
+        "preparing records..."
+    )
 
-    ids = []
-    embeddings = []
-    documents = []
-    metadatas = []
-
+    records = []
     failures = []
 
     for index, chunk in enumerate(chunks):
 
-        metadata = chunk["metadata"]
-
-        source = metadata["source"]
-        chunk_index = metadata["chunk_index"]
-
-        record_id = f"{source}::chunk_{chunk_index}"
-
         try:
-            vector = generate_embedding(chunk["text"])
 
-            ids.append(record_id)
-            embeddings.append(vector)
-            documents.append(chunk["text"])
-            metadatas.append(
-                prepare_metadata(metadata)
-            )
+            record = create_vector_record(chunk)
+
+            records.append(record)
 
         except Exception as error:
 
-            print(
-                f"Failed to embed {record_id}: {error}"
-            )
-
             failures.append(
                 {
-                    "id": record_id,
-                    "source": source,
+                    "chunk_index": index,
                     "error": str(error),
                 }
             )
 
+            print(
+                f"FAILED chunk {index}: "
+                f"{error}"
+            )
+
+    print(
+        f"Embeddings generated : "
+        f"{len(records)}"
+    )
+
     # --------------------------------------------------------
-    # Insert records into ChromaDB
+    # Step 5: Insert records
     # --------------------------------------------------------
 
-    print("\nInserting records into ChromaDB...")
+    print(
+        "\nInserting records into ChromaDB..."
+    )
 
-    if ids:
-        collection.add(
-            ids=ids,
-            embeddings=embeddings,
-            documents=documents,
-            metadatas=metadatas,
-        )
+    inserted = 0
+
+    for record in records:
+
+        try:
+
+            collection.upsert(
+                ids=[record["id"]],
+                embeddings=[record["embedding"]],
+                documents=[record["text"]],
+                metadatas=[record["metadata"]],
+            )
+
+            inserted += 1
+
+        except Exception as error:
+
+            failures.append(
+                {
+                    "id": record["id"],
+                    "error": str(error),
+                }
+            )
+
+            print(
+                f"FAILED record "
+                f"{record['id']}: "
+                f"{error}"
+            )
+
+    print(
+        f"Records indexed : "
+        f"{inserted}"
+    )
+
+    # --------------------------------------------------------
+    # Step 6: Count validation
+    # --------------------------------------------------------
 
     indexed_count = collection.count()
 
-    print(f"Records indexed : {indexed_count}")
-
-    # --------------------------------------------------------
-    # Validate indexed count
-    # --------------------------------------------------------
+    count_passed = (
+        indexed_count == expected_count
+        and len(failures) == 0
+    )
 
     print("\nCount Validation")
 
-    expected_count = len(chunks)
-    successful_count = len(ids)
-
-    if (
-        indexed_count == expected_count
-        and successful_count == expected_count
-        and len(failures) == 0
-    ):
-        count_validation = "PASSED"
+    if count_passed:
         print(
-            "PASS - Indexed count matches the number of chunks."
+            "PASS - Indexed count matches "
+            "the number of chunks."
         )
     else:
-        count_validation = "FAILED"
         print(
-            "FAIL - Indexed count does not match the corpus."
+            "FAIL - Indexed count does not "
+            "match the number of chunks."
         )
 
     # --------------------------------------------------------
-    # Spot-check stored record
+    # Step 7: Spot check
     # --------------------------------------------------------
 
-    print("\nSpot-check Stored Record")
-    print("=" * 70)
+    spot_result = None
 
-    spot_check_status = "FAILED"
-    spot_check_output = []
+    if records and not failures:
 
-    if indexed_count > 0:
+        first_record = records[0]
 
-        result = collection.get(
-            ids=[ids[0]],
-            include=[
-                "documents",
-                "metadatas",
-                "embeddings",
-            ],
+        spot_result = spot_check(
+            collection,
+            chunks[0],
+            first_record["id"],
         )
-
-        stored_id = result["ids"][0]
-        stored_text = result["documents"][0]
-        stored_metadata = result["metadatas"][0]
-        stored_vector = result["embeddings"][0]
-
-        source_chunk = chunks[0]
-
-        text_matches = (
-            stored_text == source_chunk["text"]
-        )
-
-        source_matches = (
-            stored_metadata["source"]
-            == source_chunk["metadata"]["source"]
-        )
-
-        chunk_index_matches = (
-            stored_metadata["chunk_index"]
-            == source_chunk["metadata"]["chunk_index"]
-        )
-
-        vector_length = len(stored_vector)
-
-        vector_length_matches = (
-            vector_length == len(embeddings[0])
-        )
-
-        spot_check_passed = (
-            text_matches
-            and source_matches
-            and chunk_index_matches
-            and vector_length_matches
-        )
-
-        if spot_check_passed:
-            spot_check_status = "PASSED"
-            print("PASS - Stored record matches source chunk.")
-        else:
-            spot_check_status = "FAILED"
-            print("FAIL - Stored record does not fully match.")
-
-        print(f"ID             : {stored_id}")
-        print(f"Source         : {stored_metadata['source']}")
-        print(
-            f"Chunk Index    : "
-            f"{stored_metadata['chunk_index']}"
-        )
-        print(f"Page           : {stored_metadata['page']}")
-        print(
-            f"Section        : "
-            f"{stored_metadata['section']}"
-        )
-        print(f"Vector Length  : {vector_length}")
-        print(
-            f"Text           : "
-            f"{stored_text[:120]}"
-        )
-        print(
-            f"Vector Sample  : "
-            f"{stored_vector[:8]}"
-        )
-
-        spot_check_output = [
-            f"ID             : {stored_id}",
-            f"Source         : {stored_metadata['source']}",
-            (
-                f"Chunk Index    : "
-                f"{stored_metadata['chunk_index']}"
-            ),
-            f"Page           : {stored_metadata['page']}",
-            (
-                f"Section        : "
-                f"{stored_metadata['section']}"
-            ),
-            f"Vector Length  : {vector_length}",
-            (
-                f"Text           : "
-                f"{stored_text[:120]}"
-            ),
-            (
-                f"Vector Sample  : "
-                f"{stored_vector[:8]}"
-            ),
-            "",
-            f"Text matches source chunk : {text_matches}",
-            f"Source matches            : {source_matches}",
-            (
-                f"Chunk index matches       : "
-                f"{chunk_index_matches}"
-            ),
-            (
-                f"Vector length matches     : "
-                f"{vector_length_matches}"
-            ),
-        ]
 
     else:
-        print("No records available for spot-check.")
+
+        print(
+            "\nSpot-check skipped because "
+            "indexing had failures."
+        )
+
+        spot_result = {
+            "passed": False,
+            "reason": "Indexing failures occurred.",
+        }
 
     # --------------------------------------------------------
-    # Write indexing summary
+    # Step 8: Overall result
+    # --------------------------------------------------------
+
+    overall_passed = (
+        count_passed
+        and spot_result["passed"]
+    )
+
+    print("\n" + "=" * 70)
+
+    print(
+        f"Chunks produced : "
+        f"{expected_count}"
+    )
+
+    print(
+        f"Records indexed : "
+        f"{indexed_count}"
+    )
+
+    print(
+        f"Failures        : "
+        f"{len(failures)}"
+    )
+
+    print(
+        f"Count validation: "
+        f"{'PASSED' if count_passed else 'FAILED'}"
+    )
+
+    print(
+        f"Spot-check      : "
+        f"{'PASSED' if spot_result['passed'] else 'FAILED'}"
+    )
+
+    print(
+        f"Overall result  : "
+        f"{'PASSED' if overall_passed else 'FAILED'}"
+    )
+
+    # --------------------------------------------------------
+    # Step 9: Write report
     # --------------------------------------------------------
 
     report = []
 
-    report.append("VECTOR DATABASE INDEXING SUMMARY")
+    report.append(
+        "INDEXING SUMMARY"
+    )
+
     report.append("=" * 70)
 
     report.append(
-        f"Embedding model       : {embedding_model}"
+        f"Embedding model       : "
+        f"{EMBEDDING_MODEL}"
     )
+
     report.append(
-        f"Collection             : {COLLECTION_NAME}"
+        f"Collection             : "
+        f"{COLLECTION_NAME}"
     )
+
     report.append(
-        f"Vector database        : ChromaDB"
+        "Vector database        : ChromaDB"
     )
+
     report.append(
-        f"Database path          : {VECTOR_DB_PATH}"
+        f"Embedding dimension    : "
+        f"{EMBEDDING_DIMENSION}"
     )
 
     report.append("")
-    report.append("INDEXING COUNTS")
-    report.append("-" * 70)
 
     report.append(
-        f"Chunks produced        : {expected_count}"
-    )
-    report.append(
-        f"Embeddings generated   : {successful_count}"
-    )
-    report.append(
-        f"Records indexed        : {indexed_count}"
-    )
-    report.append(
-        f"Failed records         : {len(failures)}"
+        "## INDEXING COUNTS"
     )
 
     report.append("")
-    report.append("COUNT VALIDATION")
-    report.append("-" * 70)
 
     report.append(
-        f"Expected records       : {expected_count}"
+        f"Chunks produced        : "
+        f"{expected_count}"
     )
+
     report.append(
-        f"Actual indexed records : {indexed_count}"
+        f"Embeddings generated   : "
+        f"{len(records)}"
     )
+
     report.append(
-        f"Validation             : {count_validation}"
+        f"Records indexed        : "
+        f"{indexed_count}"
+    )
+
+    report.append(
+        f"Failed records         : "
+        f"{len(failures)}"
     )
 
     report.append("")
-    report.append("SPOT-CHECK")
-    report.append("-" * 70)
 
     report.append(
-        f"Validation             : {spot_check_status}"
+        "## COUNT VALIDATION"
     )
 
-    report.extend(spot_check_output)
+    report.append("")
+
+    report.append(
+        f"Expected records       : "
+        f"{expected_count}"
+    )
+
+    report.append(
+        f"Actual indexed records : "
+        f"{indexed_count}"
+    )
+
+    report.append(
+        f"Validation             : "
+        f"{'PASSED' if count_passed else 'FAILED'}"
+    )
 
     report.append("")
-    report.append("FAILURES")
-    report.append("-" * 70)
+
+    report.append(
+        "## SPOT-CHECK"
+    )
+
+    report.append("")
+
+    report.append(
+        f"Validation             : "
+        f"{'PASSED' if spot_result['passed'] else 'FAILED'}"
+    )
+
+    if records:
+
+        report.append(
+            f"ID                     : "
+            f"{records[0]['id']}"
+        )
+
+        report.append(
+            f"Source                 : "
+            f"{records[0]['metadata'].get('source')}"
+        )
+
+        report.append(
+            f"Chunk Index            : "
+            f"{records[0]['metadata'].get('chunk_index')}"
+        )
+
+        report.append(
+            f"Vector Length          : "
+            f"{len(records[0]['embedding'])}"
+        )
+
+    report.append("")
+
+    report.append(
+        "## FAILURES"
+    )
+
+    report.append("")
 
     if failures:
+
         for failure in failures:
+
             report.append(
-                f"ID     : {failure['id']}"
+                str(failure)
             )
-            report.append(
-                f"Source : {failure['source']}"
-            )
-            report.append(
-                f"Error  : {failure['error']}"
-            )
-            report.append("")
+
     else:
+
         report.append("None")
 
     report.append("")
-    report.append("OVERALL RESULT")
-    report.append("-" * 70)
-
-    if (
-        count_validation == "PASSED"
-        and spot_check_status == "PASSED"
-        and len(failures) == 0
-    ):
-        overall_result = "PASSED"
-    else:
-        overall_result = "FAILED"
 
     report.append(
-        f"Indexing result : {overall_result}"
+        "## OVERALL RESULT"
     )
 
-    Path(OUTPUT_FILE).parent.mkdir(
+    report.append("")
+
+    report.append(
+        f"Indexing result : "
+        f"{'PASSED' if overall_passed else 'FAILED'}"
+    )
+
+    OUTPUT_FILE.parent.mkdir(
         parents=True,
-        exist_ok=True,
+        exist_ok=True
     )
 
-    Path(OUTPUT_FILE).write_text(
+    OUTPUT_FILE.write_text(
         "\n".join(report),
         encoding="utf-8",
     )
 
-    print("\n" + "=" * 70)
-    print("INDEXING COMPLETE")
-    print("=" * 70)
-
     print(
-        f"Chunks produced : {expected_count}"
-    )
-    print(
-        f"Records indexed : {indexed_count}"
-    )
-    print(
-        f"Failures        : {len(failures)}"
-    )
-    print(
-        f"Count validation: {count_validation}"
-    )
-    print(
-        f"Spot-check      : {spot_check_status}"
-    )
-    print(
-        f"Overall result  : {overall_result}"
-    )
-
-    print(
-        f"\nSummary saved to {OUTPUT_FILE}"
+        f"\nSummary saved to "
+        f"{OUTPUT_FILE}"
     )
 
 

@@ -1,0 +1,9 @@
+{
+  "status": "success",
+  "message": "Document uploaded and indexed successfully.",
+  "file": "new_policy.md",
+  "size_bytes": 193,
+  "chunks_created": 1,
+  "chunks_indexed": 1,
+  "searchable_without_restart": true
+}
