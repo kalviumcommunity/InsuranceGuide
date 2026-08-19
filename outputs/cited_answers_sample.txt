@@ -52,6 +52,16 @@ It also covers losses caused by fire, storms, and theft.
 Claim check: the answer says fire/storm damage to the dwelling is covered and cites [1]; the chunk above literally says 'covers losses caused by fire, storms, and theft' - the citation is verified as supported by its source, not just plausible-sounding.
 
 ======================================================================
+EXAMPLE 4 - WEAK RETRIEVAL QUALITY REFUSAL (low scores)
+======================================================================
+Question: What does my policy cover if my house is damaged by fire or a storm?
+Simulating the case where retrieval returned results but their similarity
+scores are too low to trust. The pipeline should refuse without calling the model.
+used_fallback   : True
+quality_report  : {'passed': False, 'reason': 'too_few_high_score_chunks', 'n_chunks': 2, 'n_above': 0, 'top_score': 0.07, 'mean_score': 0.060000000000000005}
+answer          : I don't have enough information in the provided documents to answer that.
+
+======================================================================
 EXAMPLE 2 - FABRICATED CITATION DETECTION
 ======================================================================
 Simulated (bad) model answer: Commercial fishing vessels are covered up to $250,000 under the marine endorsement [4].
