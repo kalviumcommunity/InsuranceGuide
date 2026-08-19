@@ -1,0 +1,5 @@
+{
+  "method": "POST",
+  "endpoint": "/api/upload",
+  "file": "data/new_policy.md"
+}

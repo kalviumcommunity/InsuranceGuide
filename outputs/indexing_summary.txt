@@ -1,49 +1,35 @@
-VECTOR DATABASE INDEXING SUMMARY
+INDEXING SUMMARY
 ======================================================================
 Embedding model       : gemini-embedding-001
 Collection             : insurance_chunks
 Vector database        : ChromaDB
-Database path          : vector_store
+Embedding dimension    : 3072
 
-INDEXING COUNTS
-----------------------------------------------------------------------
+## INDEXING COUNTS
+
 Chunks produced        : 3
 Embeddings generated   : 3
 Records indexed        : 3
 Failed records         : 0
 
-COUNT VALIDATION
-----------------------------------------------------------------------
+## COUNT VALIDATION
+
 Expected records       : 3
 Actual indexed records : 3
 Validation             : PASSED
 
-SPOT-CHECK
-----------------------------------------------------------------------
+## SPOT-CHECK
+
 Validation             : PASSED
-ID             : sample.md::chunk_0
-Source         : sample.md
-Chunk Index    : 0
-Page           : -1
-Section        : Property Insurance
-Vector Length  : 3072
-Text           : # Property Insurance
+ID                     : sample.md::chunk_0
+Source                 : sample.md
+Chunk Index            : 0
+Vector Length          : 3072
 
-Property insurance protects homes and buildings.
+## FAILURES
 
-It also covers losses caused by fire, storms, an
-Vector Sample  : [ 0.00233461  0.0165589   0.00666297 -0.05342337  0.0108833   0.01506659
-  0.02533268  0.0373759 ]
-
-Text matches source chunk : True
-Source matches            : True
-Chunk index matches       : True
-Vector length matches     : True
-
-FAILURES
-----------------------------------------------------------------------
 None
 
-OVERALL RESULT
-----------------------------------------------------------------------
+## OVERALL RESULT
+
 Indexing result : PASSED

@@ -6,67 +6,125 @@ from pathlib import Path
 from chromadb import PersistentClient
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DB_PATH = os.getenv("VECTOR_DB_PATH", str(BASE_DIR / "outputs" / "chroma_local"))
-COLLECTION_NAME = os.getenv("VECTOR_COLLECTION", "insurance_chunks")
-EMBEDDING_DIMENSION = int(os.getenv("EMBEDDING_DIMENSION", "3072"))
+
+DB_PATH = os.getenv(
+    "VECTOR_DB_PATH",
+    str(BASE_DIR / "outputs" / "chroma_local")
+)
+
+COLLECTION_NAME = os.getenv(
+    "VECTOR_COLLECTION",
+    "insurance_chunks"
+)
+
+EMBEDDING_DIMENSION = int(
+    os.getenv("EMBEDDING_DIMENSION", "3072")
+)
 
 
-def create_collection(db_path: str = DB_PATH, collection_name: str = COLLECTION_NAME, dimension: int = EMBEDDING_DIMENSION):
-    """Create or open a Chroma persistent collection with a stable embedding dimension."""
+def create_collection(
+    db_path: str = DB_PATH,
+    collection_name: str = COLLECTION_NAME,
+    dimension: int = EMBEDDING_DIMENSION,
+):
+    """
+    Create or open the ChromaDB collection.
+
+    The collection is configured for cosine similarity and the
+    embedding dimension used by the Gemini embedding model.
+    """
+
     client = PersistentClient(path=db_path)
-    return client.get_or_create_collection(
+
+    collection = client.get_or_create_collection(
         name=collection_name,
         embedding_function=None,
-        metadata={"hnsw:space": "cosine", "dimension": str(dimension)},
+        metadata={
+            "hnsw:space": "cosine",
+            "dimension": str(dimension),
+        },
     )
 
+    return collection
 
-def insert_test_record(collection, record_id: str, text: str, metadata: dict, vector: list[float]):
-    """Insert one demonstration record and return the payload written to Chroma."""
-    collection.add(
+
+def insert_test_record(
+    collection,
+    record_id: str,
+    text: str,
+    metadata: dict,
+    vector: list[float],
+):
+    """
+    Insert one vector record into ChromaDB.
+
+    This helper is used by tests, so the vector dimension is validated
+    against the actual collection dimension rather than the production
+    Gemini embedding dimension.
+    """
+
+    if not vector:
+        raise ValueError("Vector cannot be empty.")
+
+    collection_dimension = None
+
+    try:
+        collection_metadata = collection.metadata or {}
+        configured_dimension = collection_metadata.get("dimension")
+
+        if configured_dimension is not None:
+            collection_dimension = int(configured_dimension)
+    except (TypeError, ValueError):
+        collection_dimension = None
+
+    if (
+        collection_dimension is not None
+        and len(vector) != collection_dimension
+    ):
+        raise ValueError(
+            f"Invalid vector dimension: expected "
+            f"{collection_dimension}, got {len(vector)}"
+        )
+
+    collection.upsert(
         ids=[record_id],
         embeddings=[vector],
         documents=[text],
         metadatas=[metadata],
     )
-    return {"id": record_id, "text": text, "metadata": metadata, "dimension": len(vector)}
+
+    return {
+        "id": record_id,
+        "text": text,
+        "metadata": metadata,
+        "dimension": len(vector),
+    }
 
 
 def read_test_record(collection, record_id: str):
-    """Read back a single stored record by ID for verification."""
-    return collection.get(ids=[record_id], include=["embeddings", "documents", "metadatas"])
+    """
+    Read back one stored record for verification.
+    """
+
+    return collection.get(
+        ids=[record_id],
+        include=[
+            "embeddings",
+            "documents",
+            "metadatas",
+        ],
+    )
 
 
 def main():
     collection = create_collection()
 
-    test_vector = [0.1, 0.2, 0.3]
-    result = insert_test_record(
-        collection,
-        record_id="test-record-1",
-        text="Property insurance protects a home from fire and storm damage.",
-        metadata={
-            "source": "sample.md",
-            "chunk_index": 0,
-            "section": "Property Insurance",
-        },
-        vector=test_vector,
-    )
-
-    readback = read_test_record(collection, record_id="test-record-1")
-
-    print("Vector DB collection smoke test")
+    print("Vector DB collection")
     print("=" * 60)
-    print(f"Collection name: {COLLECTION_NAME}")
-    print(f"Dimension: {EMBEDDING_DIMENSION}")
-    print(f"Inserted id: {result['id']}")
-    print(f"Vector length: {len(test_vector)}")
-    print(f"Document text: {result['text']}")
-    print(f"Metadata: {result['metadata']}")
-    print("Readback IDs:", readback.get("ids"))
-    print("Readback embeddings length:", len(readback.get("embeddings", [[]])[0]))
-    print("Readback documents:", readback.get("documents"))
-    print("Readback metadata:", readback.get("metadatas"))
+    print(f"Collection name : {COLLECTION_NAME}")
+    print(f"Database path   : {DB_PATH}")
+    print(f"Expected vector : {EMBEDDING_DIMENSION}")
+    print(f"Stored records  : {collection.count()}")
 
 
 if __name__ == "__main__":

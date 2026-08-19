@@ -21,3 +21,7 @@ __pycache__/
 *.pyc
 
 vector_store/
+data/uploads/*
+!data/uploads/.gitkeep
+# Runtime ChromaDB database
+outputs/chroma_local/

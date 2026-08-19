@@ -1,0 +1,26 @@
+{
+  "status": "success",
+  "question": "What does the new policy provide protection for?",
+  "answer": "The new policy provides flood protection for insured residential properties.",
+  "sources": [
+    {
+      "source": "new_policy.md",
+      "chunk_index": 0,
+      "section": "New Policy Coverage",
+      "score": 0.7823
+    },
+    {
+      "source": "sample.txt",
+      "chunk_index": 0,
+      "section": null,
+      "score": 0.6543
+    },
+    {
+      "source": "sample.md",
+      "chunk_index": 0,
+      "section": "Property Insurance",
+      "score": 0.6477
+    }
+  ],
+  "searchable_without_restart": true
+}
