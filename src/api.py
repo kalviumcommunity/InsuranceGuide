@@ -7,14 +7,9 @@ from typing import Any
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 
-from rag_pipeline import answer_query
-from document_loader import load_documents
-from text_cleaning import clean
-from chunk_metadata import tag_chunks
-from index_embeddings import generate_embedding
-from vector_store import create_collection
+from rag_pipeline import answer_query, stream_answer_query
 
 load_dotenv()
 
@@ -123,6 +118,40 @@ async def query_endpoint(request: Request) -> dict[str, Any]:
     }
 
 
+@app.post("/api/query/stream")
+async def streaming_query_endpoint(request: Request) -> StreamingResponse:
+    """Stream sources and grounded answer tokens as newline-delimited JSON."""
+    try:
+        payload = await request.json()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Request body must be valid JSON.") from exc
+
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="Request body must be a JSON object.")
+
+    question = payload.get("question")
+    if question is None or not str(question).strip():
+        raise HTTPException(status_code=400, detail="Question is required.")
+
+    k = payload.get("k", 3)
+    if isinstance(k, bool) or not isinstance(k, int) or k < 1 or k > 10:
+        raise HTTPException(status_code=400, detail="k must be an integer between 1 and 10.")
+
+    def event_stream():
+        import json
+
+        try:
+            for event in stream_answer_query(str(question).strip(), k=k):
+                yield json.dumps(event) + "\n"
+        except Exception:
+            yield json.dumps({
+                "type": "error",
+                "detail": "The answer stream was interrupted. Please try again.",
+            }) + "\n"
+
+    return StreamingResponse(event_stream(), media_type="application/x-ndjson")
+
+
 # ============================================================
 # RUNTIME DOCUMENT UPLOAD
 # ============================================================
@@ -138,6 +167,11 @@ async def upload_document(
     Supported formats:
     .txt, .md, .pdf
     """
+    from chunk_metadata import tag_chunks
+    from document_loader import load_documents
+    from index_embeddings import generate_embedding
+    from text_cleaning import clean
+    from vector_store import create_collection
 
     # --------------------------------------------------------
     # Validate filename

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from typing import Any
 
@@ -11,6 +12,7 @@ load_dotenv()
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")
 QUERY_URL = f"{API_BASE_URL}/api/query"
+STREAM_QUERY_URL = f"{API_BASE_URL}/api/query/stream"
 
 st.set_page_config(page_title="InsuranceGuide", page_icon="🛡️", layout="wide")
 
@@ -43,11 +45,12 @@ submit = st.button("Ask InsuranceGuide", type="primary", use_container_width=Tru
 
 
 def source_label(source: dict[str, Any], index: int) -> str:
+    marker = source.get("marker", f"[{index}]")
     name = source.get("source") or "Unknown source"
     chunk = source.get("chunk_index", "?")
     score = source.get("score")
     score_text = f" | relevance {score}" if score is not None else ""
-    return f"{index}. {name} | chunk {chunk}{score_text}"
+    return f"{marker} {name} | chunk {chunk}{score_text}"
 
 
 def render_sources(sources: list[dict[str, Any]]) -> None:
@@ -66,6 +69,9 @@ def render_sources(sources: list[dict[str, Any]]) -> None:
             }
             if source.get("url") or source.get("link"):
                 st.markdown(f"[Open source]({source.get('url') or source.get('link')})")
+            if source.get("text"):
+                st.markdown("**Cited content**")
+                st.code(source["text"], language="text")
             if metadata:
                 st.json(metadata)
 
@@ -75,35 +81,51 @@ if submit:
     if not question:
         st.error("Enter a question before submitting.")
     else:
-        with st.spinner("Retrieving grounded answer..."):
-            try:
-                response = requests.post(
-                    QUERY_URL,
-                    json={"question": question, "k": top_k},
-                    timeout=60,
-                )
+        left, right = st.columns([1.6, 1], gap="large")
+        with left:
+            st.subheader("Grounded answer")
+            answer_placeholder = st.empty()
+            answer_placeholder.info("Retrieving sources and starting the answer...")
+        with right:
+            sources_placeholder = st.empty()
+
+        answer = ""
+        sources: list[dict[str, Any]] = []
+        stream_failed = False
+        try:
+            with requests.post(
+                STREAM_QUERY_URL,
+                json={"question": question, "k": top_k},
+                stream=True,
+                timeout=(10, 120),
+            ) as response:
                 response.raise_for_status()
-                payload = response.json()
-            except requests.RequestException as exc:
-                st.error(f"Could not reach the RAG API: {exc}")
-            except ValueError:
-                st.error("The RAG API returned invalid JSON.")
-            else:
-                if payload.get("status") != "success" or not payload.get("answer"):
-                    st.error(payload.get("detail", "The API did not return a grounded answer."))
-                else:
-                    answer, sources = payload["answer"], payload.get("sources", [])
-                    left, right = st.columns([1.6, 1], gap="large")
-                    with left:
-                        st.subheader("Grounded answer")
-                        st.markdown('<div class="answer">', unsafe_allow_html=True)
-                        st.markdown(answer)
-                        st.markdown('</div>', unsafe_allow_html=True)
-                    with right:
-                        render_sources(sources)
-                    metadata = payload.get("metadata", {})
-                    if metadata:
-                        st.caption(
-                            f"Retrieved {metadata.get('retrieved_chunks', len(sources))} source(s) "
-                            f"with top-k={metadata.get('top_k', top_k)}."
-                        )
+                for line in response.iter_lines(decode_unicode=True):
+                    if not line:
+                        continue
+                    try:
+                        event = json.loads(line)
+                    except ValueError:
+                        stream_failed = True
+                        st.error("The RAG API returned an invalid streaming event.")
+                        break
+
+                    if event.get("type") == "sources":
+                        sources = event.get("sources", [])
+                        with sources_placeholder.container():
+                            render_sources(sources)
+                    elif event.get("type") == "token":
+                        answer += event.get("text", "")
+                        answer_placeholder.markdown(answer)
+                    elif event.get("type") == "error":
+                        stream_failed = True
+                        st.error(event.get("detail", "The answer stream was interrupted."))
+                        break
+        except requests.RequestException as exc:
+            stream_failed = True
+            st.error(f"Could not reach the RAG API: {exc}")
+
+        if stream_failed and answer:
+            st.warning("The stream stopped early. The partial answer remains visible above.")
+        elif not stream_failed and not answer:
+            answer_placeholder.info("The API returned no answer.")

@@ -13,6 +13,7 @@ User Query
 import json
 import os
 from pathlib import Path
+from typing import Iterator
 
 from dotenv import load_dotenv
 from google import genai
@@ -150,6 +151,7 @@ If the context does not contain enough information to answer,
 say that the available documents do not contain enough information.
 
 Do not invent facts.
+For each factual claim, include the marker [n] of the supporting context chunk.
 
 Context:
 {context}
@@ -167,6 +169,62 @@ Question:
     )
 
     return response.text.strip()
+
+
+def stream_answer_query(query, k=3) -> Iterator[dict]:
+    """Yield source metadata and answer text as it is generated."""
+    if query is None or not str(query).strip():
+        raise ValueError("Question is required.")
+
+    query = str(query).strip()
+    query_vector = embed_query_stage(query)
+    chunks = retrieve_context(query_vector, k=k)
+
+    sources = []
+    for index, chunk in enumerate(chunks, start=1):
+        metadata = chunk.get("metadata", {})
+        sources.append(
+            {
+                "marker": f"[{index}]",
+                "source": metadata.get("source"),
+                "chunk_index": metadata.get("chunk_index"),
+                "section": metadata.get("section"),
+                "score": chunk.get("score"),
+                "text": chunk.get("text", ""),
+            }
+        )
+
+    yield {"type": "sources", "sources": sources, "metadata": {"top_k": k}}
+
+    if not chunks:
+        yield {"type": "token", "text": "I could not find relevant context for this question."}
+        yield {"type": "done"}
+        return
+
+    context = assemble_context(chunks)
+    prompt = f"""
+Answer the user's question using ONLY the context provided below.
+If the context does not contain enough information, say so.
+Do not invent facts. For each factual claim, include the marker [n]
+of the supporting context chunk.
+
+Context:
+{context}
+
+Question:
+{query}
+"""
+
+    response = get_gemini_client().models.generate_content_stream(
+        model=get_chat_model(),
+        contents=prompt,
+        config=types.GenerateContentConfig(temperature=0.2),
+    )
+    for item in response:
+        text = getattr(item, "text", None)
+        if text:
+            yield {"type": "token", "text": text}
+    yield {"type": "done"}
 
 
 # ---------------------------------------------------------
