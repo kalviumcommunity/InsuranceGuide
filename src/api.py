@@ -27,6 +27,28 @@ MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
 app = FastAPI(title=APP_TITLE, version=APP_VERSION)
 
 
+@app.get("/")
+def api_root() -> dict[str, Any]:
+    return {
+        "status": "ok",
+        "service": APP_TITLE,
+        "message": "Use POST /api/query, POST /api/query/stream, or POST /api/upload.",
+    }
+
+
+@app.get("/api")
+def api_routes() -> dict[str, Any]:
+    return {
+        "status": "ok",
+        "routes": {
+            "query": "POST /api/query",
+            "stream": "POST /api/query/stream",
+            "upload": "POST /api/upload",
+            "health": "GET /health",
+        },
+    }
+
+
 # ============================================================
 # HEALTH
 # ============================================================

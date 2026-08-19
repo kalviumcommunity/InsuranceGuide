@@ -35,6 +35,34 @@ with st.sidebar:
     st.subheader("Connection")
     st.code(API_BASE_URL, language="text")
     top_k = st.slider("Sources to retrieve", min_value=1, max_value=10, value=3)
+    st.subheader("Policy document")
+    policy_file = st.file_uploader("Upload a PDF policy", type=["pdf"])
+    upload_policy = st.button("Process policy", use_container_width=True)
+
+    if upload_policy:
+        if policy_file is None:
+            st.warning("Choose a PDF policy first.")
+        else:
+            try:
+                upload_response = requests.post(
+                    f"{API_BASE_URL}/api/upload",
+                    files={"file": (policy_file.name, policy_file.getvalue(), "application/pdf")},
+                    timeout=180,
+                )
+                upload_response.raise_for_status()
+                upload_result = upload_response.json()
+                st.success(
+                    f"Processed {upload_result.get('file', policy_file.name)}: "
+                    f"{upload_result.get('chunks_indexed', 0)} searchable chunks."
+                )
+            except requests.RequestException as exc:
+                detail = ""
+                if getattr(exc, "response", None) is not None:
+                    try:
+                        detail = exc.response.json().get("detail", "")
+                    except ValueError:
+                        detail = exc.response.text
+                st.error(f"Policy processing failed: {detail or exc}")
 
 question = st.text_area(
     "Question",
