@@ -76,6 +76,13 @@ with st.sidebar:
     st.caption("Your policy stays searchable for this session.")
     st.markdown('<div class="section-kicker">Backend connection</div>', unsafe_allow_html=True)
     st.code(API_BASE_URL, language="text")
+    try:
+        health = requests.get(f"{API_BASE_URL}/health", timeout=5).json()
+        config = health.get("configuration", {})
+        if not config.get("gemini_api_key"):
+            st.warning("Backend needs GEMINI_API_KEY before questions can run.")
+    except requests.RequestException:
+        st.error("Backend is offline. Start the API before asking questions.")
     top_k = st.slider("Sources to retrieve", min_value=1, max_value=10, value=3)
     st.markdown('<div class="section-kicker">Policy document</div>', unsafe_allow_html=True)
     policy_file = st.file_uploader("Upload a PDF policy", type=["pdf"])
