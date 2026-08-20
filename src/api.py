@@ -22,9 +22,31 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 UPLOAD_FOLDER = BASE_DIR / "data" / "uploads"
 
 ALLOWED_EXTENSIONS = {".txt", ".md", ".pdf"}
-MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
+MAX_FILE_SIZE = int(os.getenv("MAX_FILE_SIZE_BYTES", str(50 * 1024 * 1024)))
 
 app = FastAPI(title=APP_TITLE, version=APP_VERSION)
+
+
+@app.get("/")
+def api_root() -> dict[str, Any]:
+    return {
+        "status": "ok",
+        "service": APP_TITLE,
+        "message": "Use POST /api/query, POST /api/query/stream, or POST /api/upload.",
+    }
+
+
+@app.get("/api")
+def api_routes() -> dict[str, Any]:
+    return {
+        "status": "ok",
+        "routes": {
+            "query": "POST /api/query",
+            "stream": "POST /api/query/stream",
+            "upload": "POST /api/upload",
+            "health": "GET /health",
+        },
+    }
 
 
 # ============================================================
@@ -37,6 +59,11 @@ def health_check() -> dict[str, Any]:
         "status": "ok",
         "service": APP_TITLE,
         "version": APP_VERSION,
+        "configuration": {
+            "gemini_api_key": bool(os.getenv("GEMINI_API_KEY")),
+            "chat_model": os.getenv("CHAT_MODEL", "gemini-2.0-flash"),
+            "embedding_model": os.getenv("EMBEDDING_MODEL", "gemini-embedding-001"),
+        },
     }
 
 
@@ -143,10 +170,17 @@ async def streaming_query_endpoint(request: Request) -> StreamingResponse:
         try:
             for event in stream_answer_query(str(question).strip(), k=k):
                 yield json.dumps(event) + "\n"
-        except Exception:
+        except Exception as exc:
+            detail = str(exc)
+            if "GEMINI_API_KEY" in detail:
+                detail = "GEMINI_API_KEY is not configured on the backend. Add it to the server environment and restart the API."
+            elif "chroma" in detail.lower() or "collection" in detail.lower():
+                detail = "The policy index is unavailable. Upload and process a policy PDF, then try again."
+            else:
+                detail = "The answer stream was interrupted while contacting the model or policy index."
             yield json.dumps({
                 "type": "error",
-                "detail": "The answer stream was interrupted. Please try again.",
+                "detail": detail,
             }) + "\n"
 
     return StreamingResponse(event_stream(), media_type="application/x-ndjson")
@@ -230,7 +264,7 @@ async def upload_document(
 
                     raise HTTPException(
                         status_code=413,
-                        detail="File is too large. Maximum size is 5 MB.",
+                        detail=f"File is too large. Maximum size is {MAX_FILE_SIZE // (1024 * 1024)} MB.",
                     )
 
                 buffer.write(chunk)
